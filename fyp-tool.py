@@ -70,37 +70,63 @@ for dirpath, dirnames, filenames in os.walk(folder_to_open):
                 for i in range(1, max_n + 1):
                     X_train, X_test, y_train, y_test = train_test_split(data.X, data.y, train_size=data.num_features*num_samples)#, random_state=i-1)
 
+                    X_size = X_train.shape[0]
                     reg = None
+                    cross_folds = 3
 
                     if regression_type == 'linear':
                         reg = linear_model.LinearRegression()
                     elif regression_type == 'linear_bagging':
-                        reg = BaggingRegressor(base_estimator=linear_model.LinearRegression())
+                        if X_size >= cross_folds * 2:
+                            param_grid = {
+                                'n_estimators': np.arange(2, 20 + 1),
+                                'max_samples': np.arange(1, (X_size - math.ceil(X_size / cross_folds)) + 1),
+                                'max_features': np.arange(1, data.num_features + 1)
+                            }
+                            reg = GridSearchCV(estimator=BaggingRegressor(base_estimator=linear_model.LinearRegression()), param_grid=param_grid, cv=cross_folds)
+                        else:
+                            reg = BaggingRegressor(base_estimator=linear_model.LinearRegression())
                     elif regression_type == 'svm':
-                        if len(X_train) >= 6:
+                        if X_size >= cross_folds * 2:
                             param_grid = {
                                 'kernel': ['linear', 'poly', 'rbf'],
                                 'C': np.logspace(-2, 3, num=10),
                                 'gamma': np.logspace(-3, 0, num=10),
                                 'epsilon': np.logspace(-3, 0, num=5)
                             }
-                            reg = GridSearchCV(estimator=svm.SVR(), param_grid=param_grid, cv=3)
+                            reg = GridSearchCV(estimator=svm.SVR(), param_grid=param_grid, cv=cross_folds)
                         else:
                             reg = svm.SVR()
                     elif regression_type == 'svm_bagging':
-                        reg = BaggingRegressor(base_estimator=svm.SVR())
-                    elif regression_type == 'trees':
-                        if len(X_train) >= 6:
+                        if X_size >= cross_folds * 2:
                             param_grid = {
-                                'min_samples_split': np.arange(2, len(X_train)),
-                                'min_samples_leaf': np.arange(1, math.ceil(len(X_train) / 3)),
+                                'n_estimators': np.arange(2, 20 + 1),
+                                'max_samples': np.arange(1, (X_size - math.ceil(X_size / cross_folds)) + 1),
+                                'max_features': np.arange(1, data.num_features + 1)
+                            }
+                            reg = GridSearchCV(estimator=BaggingRegressor(base_estimator=svm.SVR()), param_grid=param_grid, cv=cross_folds)
+                        else:
+                            reg = BaggingRegressor(base_estimator=svm.SVR())
+                    elif regression_type == 'trees':
+                        if X_size >= cross_folds * 2:
+                            param_grid = {
+                                'min_samples_split': np.arange(2, X_size + 1),
+                                'min_samples_leaf': np.arange(1, math.ceil((X_size + 1) / 3)),
                                 'ccp_alpha': np.logspace(-6, -2, num=10)
                             }
-                            reg = GridSearchCV(estimator=tree.DecisionTreeRegressor(), param_grid=param_grid, cv=3)
+                            reg = GridSearchCV(estimator=tree.DecisionTreeRegressor(), param_grid=param_grid, cv=cross_folds)
                         else:
                             reg = tree.DecisionTreeRegressor()
                     elif regression_type == 'trees_bagging':
-                        reg = BaggingRegressor(base_estimator=tree.DecisionTreeRegressor())
+                        if X_size >= cross_folds * 2:
+                            param_grid = {
+                                'n_estimators': np.arange(2, 20 + 1),
+                                'max_samples': np.arange(1, (X_size - math.ceil(X_size / cross_folds)) + 1),
+                                'max_features': np.arange(1, data.num_features + 1)
+                            }
+                            reg = GridSearchCV(estimator=BaggingRegressor(base_estimator=tree.DecisionTreeRegressor()), param_grid=param_grid, cv=cross_folds)
+                        else:
+                            reg = BaggingRegressor(base_estimator=tree.DecisionTreeRegressor())
 
                     reg.fit(X_train, y_train)
 
