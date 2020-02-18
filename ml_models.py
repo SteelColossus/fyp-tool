@@ -38,6 +38,8 @@ def get_ml_model(regression_type, X_size, num_features, skip_training=False):
     if X_size < cross_folds and not skip_training:
         return None
 
+    reg = None
+
     if regression_type == RegressionType.LINEAR:
         reg = get_linear_regression_model()
     elif regression_type == RegressionType.LINEAR_BAGGING:

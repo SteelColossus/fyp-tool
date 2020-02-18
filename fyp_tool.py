@@ -1,5 +1,6 @@
 from ml_models import get_model_predictions, RegressionType
 from deep_models import get_deep_model_predictions
+from error_calculations import mean_absolute_error, mean_squared_error, mean_absolute_percentage_error, symmetric_mean_absolute_percentage_error
 
 import time
 import argparse
@@ -15,18 +16,6 @@ def read_csv_file(file_path):
     num_features = data.shape[1] - 1
 
     return (X, y, num_features)
-
-def mean_absolute_error(predictions, actuals):
-    return np.mean(np.abs(np.subtract(actuals, predictions)))
-
-def mean_squared_error(predictions, actuals):
-    return np.mean(np.square(np.subtract(actuals, predictions)))
-
-def mean_absolute_percentage_error(predictions, actuals):
-    return np.multiply(np.mean(np.abs(np.divide(np.subtract(actuals, predictions), actuals))), 100)
-
-def symmetric_mean_absolute_percentage_error(predictions, actuals):
-    return np.multiply(np.mean(np.divide(np.abs(np.subtract(actuals, predictions)), np.add(np.abs(actuals), np.abs(predictions)))), 100)
 
 parser = argparse.ArgumentParser(description='Evaluate the prediction error for a machine learning model type and a software system.')
 parser.add_argument('system', help='the software system to evaluate')
