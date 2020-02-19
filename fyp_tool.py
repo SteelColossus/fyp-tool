@@ -1,5 +1,5 @@
-from ml_models import get_model_predictions, RegressionType
-from deep_models import get_deep_model_predictions
+from ml_models import fit_ml_model, RegressionType
+from deep_models import fit_deep_model
 from error_calculations import mean_absolute_error, mean_squared_error, mean_absolute_percentage_error, symmetric_mean_absolute_percentage_error
 
 import time
@@ -7,15 +7,15 @@ import argparse
 
 import numpy as np
 from tabulate import tabulate
+from sklearn.model_selection import train_test_split
 
 def read_csv_file(file_path):
     data = np.genfromtxt(file_path, delimiter=',', skip_header=1)
 
     X = data[:, :-1]
     y = data[:, -1:][:, 0]
-    num_features = data.shape[1] - 1
 
-    return (X, y, num_features)
+    return (X, y)
 
 parser = argparse.ArgumentParser(description='Evaluate the prediction error for a machine learning model type and a software system.')
 parser.add_argument('system', help='the software system to evaluate')
@@ -28,7 +28,8 @@ max_n, samples, skip_training = args.n, args.samples, args.skip_training
 
 file_path_to_open = 'data/' + args.system + '_AllMeasurements.csv'
 
-(X, y, num_features) = read_csv_file(file_path_to_open)
+(X, y) = read_csv_file(file_path_to_open)
+num_features = X.shape[1]
 
 print(args.system + ':')
 print('-' * 40)
@@ -60,15 +61,22 @@ for regression_type in regression_types:
         start_time = time.perf_counter()
 
         for _ in range(1, max_n + 1):
-            predictions, y_test = None, None
+            X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=num_features*num_samples)
 
             if regression_type == RegressionType.DEEP:
-                predictions, y_test = get_deep_model_predictions(X, y, num_features, num_samples, skip_training)
-            else:
-                predictions, y_test = get_model_predictions(regression_type, X, y, num_features, num_samples, skip_training)
+                normalize = lambda data: np.subtract(data, np.mean(data)) / np.std(data)
 
-            if predictions is None:
+                y_train = normalize(y_train)
+                y_test = normalize(y_test)
+
+                model = fit_deep_model(X_train, y_train, skip_training)
+            else:
+                model = fit_ml_model(regression_type, X_train, y_train, skip_training)
+
+            if model is None:
                 break
+
+            predictions = model.predict(X_test)
 
             mae = mean_absolute_error(predictions, y_test)
             mse = mean_squared_error(predictions, y_test)
