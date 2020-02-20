@@ -15,11 +15,17 @@ def fit_deep_model(X_train, y_train, skip_training=False):
     else:
         model = get_deep_model(X_train.shape[1])
 
+    if model is None:
+        return None
+
     model.fit(X_train, y_train, epochs=epochs, verbose=0)
 
     return model
 
 def get_trained_deep_model(X_train, y_train):
+    if X_train.shape[0] < cross_folds:
+        return None
+
     mean_mse_list = []
     lr_range = np.logspace(-4, -1, num=4)
     kf = KFold(n_splits=cross_folds)
