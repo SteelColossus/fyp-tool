@@ -84,6 +84,8 @@ for regression_type in regression_types:
             smape = symmetric_mean_absolute_percentage_error(predictions, y_test)
             errors.append((mae, mse, mape, smape))
 
+            print('.', end='', flush=True)
+
         # Per iteration in milliseconds
         time_elapsed = np.round(((time.perf_counter() - start_time) * 1000) / max_n, 2)
 
@@ -119,6 +121,7 @@ for regression_type in regression_types:
         smape_table[sample_i+1].append(smape_text)
         time_table[sample_i+1].append(time_text)
 
+        print('', end='\r')
         print('Completed ' + regression_type.value + ' evaluation for ' + str(num_samples) + 'N.', flush=True)
 
 total_time_elapsed = np.round(time.perf_counter() - total_start_time, 2)
