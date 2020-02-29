@@ -64,5 +64,5 @@ def get_deep_model(num_features, num_layers=10, learning_rate=0.001):
 
     lr_schedule = optimizers.schedules.InverseTimeDecay(learning_rate, decay_steps=1, decay_rate=learning_rate/1000)
 
-    model.compile(optimizer=optimizers.Adam(learning_rate=lr_schedule), loss='mse')
+    model.compile(optimizer=optimizers.Adam(learning_rate=lr_schedule, clipvalue=1), loss='mse')
     return model
