@@ -64,10 +64,10 @@ for regression_type in regression_types:
             X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=num_features*num_samples)
 
             if regression_type == RegressionType.DEEP:
-                normalize = lambda data: np.subtract(data, np.mean(data)) / np.std(data)
+                max_y = np.max(y_train)
 
-                y_train = normalize(y_train)
-                y_test = normalize(y_test)
+                y_train = (y_train / max_y) * 100
+                y_test = (y_test / max_y) * 100
 
                 model = fit_deep_model(X_train, y_train, skip_training)
             else:
