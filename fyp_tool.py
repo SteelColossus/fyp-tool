@@ -61,7 +61,7 @@ for regression_type in regression_types:
         start_time = time.perf_counter()
 
         for _ in range(1, max_n + 1):
-            X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=num_features*num_samples)
+            X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=num_features*num_samples, random_state=num_samples-1)
 
             if regression_type == RegressionType.DEEP:
                 max_y = np.max(y_train)
