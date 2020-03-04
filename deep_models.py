@@ -1,4 +1,4 @@
-from error_calculations import mean_squared_error
+from error_calculations import mean_absolute_error
 
 import datetime
 import os
@@ -33,30 +33,34 @@ def fit_deep_model(X_train, y_train, skip_training=False):
     return model
 
 def get_trained_deep_model(X_train, y_train):
-    if X_train.shape[0] < cross_folds:
-        return None
+    optimal_learning_rate_per_layer = []
+    optimal_mean_mae_per_layer = []
+    num_layer_range = np.arange(2, 16)
+    learning_rate_range = np.logspace(-4, -1, num=4)
 
-    mean_mse_list = []
-    lr_range = np.logspace(-4, -1, num=4)
-    kf = KFold(n_splits=cross_folds)
+    for num_layer in num_layer_range:
+        mae_list = []
 
-    for lr in lr_range:
-        mse_list = []
-        model = get_deep_model(X_train.shape[1], learning_rate=lr)
+        for learning_rate in learning_rate_range:
+            model = get_deep_model(X_train.shape[1], num_layers=num_layer, learning_rate=learning_rate)
 
-        for train_indices, test_indices in kf.split(X_train, y_train):
-            model.fit(X_train[train_indices], y_train[train_indices], epochs=epochs, verbose=0)
+            model.fit(X_train, y_train, epochs=epochs, verbose=0)
 
-            predictions = model.predict(X_train[test_indices])
+            predictions = model.predict(X_train)
+            mae = mean_absolute_error(predictions, y_train)
+            mae_list.append(mae)
 
-            mse = mean_squared_error(predictions, y_train[test_indices])
-            mse_list.append(mse)
+        optimal_learning_rate_index = np.argmin(mae_list)
+        optimal_mean_mae = mae_list[optimal_learning_rate_index]
+        optimal_mean_mae_per_layer.append(optimal_mean_mae)
+        optimal_learning_rate = learning_rate_range[optimal_learning_rate_index]
+        optimal_learning_rate_per_layer.append(optimal_learning_rate)
 
-        mean_mse_list.append(np.mean(mse_list))
+    optimal_num_layers_index = np.argmin(optimal_mean_mae_per_layer)
+    optimal_num_layers = optimal_num_layers_index + num_layer_range[0]
+    optimal_learning_rate = optimal_learning_rate_per_layer[optimal_num_layers_index]
 
-    optimal_lr = lr_range[np.argmin(mean_mse_list)]
-
-    model = get_deep_model(X_train.shape[1], learning_rate=optimal_lr)
+    model = get_deep_model(X_train.shape[1], num_layers=optimal_num_layers, learning_rate=optimal_learning_rate)
     return model
 
 def get_deep_model(num_features, num_layers=10, learning_rate=0.001):
