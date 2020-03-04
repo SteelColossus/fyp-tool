@@ -1,8 +1,11 @@
 from error_calculations import mean_squared_error
 
+import datetime
+import os
+
 import numpy as np
 from sklearn.model_selection import KFold
-from tensorflow.keras import models, layers, optimizers
+from tensorflow.keras import models, layers, optimizers, callbacks
 
 epochs = 2000
 num_neurons = 128
@@ -19,7 +22,13 @@ def fit_deep_model(X_train, y_train, skip_training=False):
     if model is None:
         return None
 
-    model.fit(X_train, y_train, epochs=epochs, verbose=0)
+    callbacks = []
+
+    # Uncomment for Tensorboard viewing
+    # log_dir = os.path.join("logs", datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+    # callbacks.append(callbacks.TensorBoard(log_dir=log_dir))
+
+    model.fit(X_train, y_train, epochs=epochs, verbose=0, callbacks=callbacks)
 
     return model
 
