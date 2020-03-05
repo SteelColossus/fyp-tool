@@ -70,6 +70,9 @@ for regression_type in regression_types:
                 y_test = (y_test / max_y) * 100
 
                 model = fit_deep_model(X_train, y_train, skip_training)
+
+                y_train = (y_train / 100) * max_y
+                y_test = (y_test / 100) * max_y
             else:
                 model = fit_ml_model(regression_type, X_train, y_train, skip_training)
 
