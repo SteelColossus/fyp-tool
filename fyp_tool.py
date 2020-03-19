@@ -36,32 +36,20 @@ print('-' * 40)
 
 regression_types = [RegressionType.LINEAR, RegressionType.LINEAR_BAGGING, RegressionType.SVM, RegressionType.SVM_BAGGING, RegressionType.TREES, RegressionType.TREES_BAGGING, RegressionType.DEEP]
 
-table_headings = [''] + [rt.value for rt in regression_types]
-
-mae_table = [table_headings]
-mse_table = [table_headings]
-mape_table = [table_headings]
-smape_table = [table_headings]
-time_table = [table_headings]
-
-for num_samples in samples:
-    sample_text = str(num_samples) + 'N:'
-    mae_table.append([sample_text])
-    mse_table.append([sample_text])
-    mape_table.append([sample_text])
-    smape_table.append([sample_text])
-    time_table.append([sample_text])
-
 total_start_time = time.perf_counter()
+
+model_results = {rt: [] for rt in regression_types}
+measurement_results = {rt: [] for rt in regression_types}
 
 for regression_type in regression_types:
     for sample_i, num_samples in enumerate(samples):
-        errors = []
+        model_results[regression_type].append([])
+        measurement_results[regression_type].append({})
 
         start_time = time.perf_counter()
 
-        for _ in range(1, max_n + 1):
-            X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=num_features*num_samples, random_state=num_samples-1)
+        for run_i in range(1, max_n + 1):
+            X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=num_features*num_samples, random_state=run_i-1)
 
             if regression_type == RegressionType.DEEP:
                 max_y = np.max(y_train)
@@ -81,16 +69,74 @@ for regression_type in regression_types:
 
             predictions = model.predict(X_test)
 
-            mae = mean_absolute_error(predictions, y_test)
-            mse = mean_squared_error(predictions, y_test)
-            mape = mean_absolute_percentage_error(predictions, y_test)
-            smape = symmetric_mean_absolute_percentage_error(predictions, y_test)
-            errors.append((mae, mse, mape, smape))
+            model_results[regression_type][sample_i].append({
+                'actuals': y_test,
+                'predictions': predictions
+            })
 
             print('.', end='', flush=True)
 
         # Per iteration in milliseconds
         time_elapsed = np.round(((time.perf_counter() - start_time) * 1000) / max_n, 2)
+        measurement_results[regression_type][sample_i]['time'] = time_elapsed
+
+        print('', end='\r')
+        print('Completed ' + regression_type.value + ' evaluation for ' + str(num_samples) + 'N.', flush=True)
+
+total_time_elapsed = np.round(time.perf_counter() - total_start_time, 2)
+errors = {rt: [] for rt in regression_types}
+
+for regression_type in regression_types:
+    for sample_results in model_results[regression_type]:
+        if len(sample_results) == 0:
+            errors[regression_type].append(None)
+            break
+
+        for run_results in sample_results:
+            actuals = run_results['actuals']
+            predictions = run_results['predictions']
+
+            run_results['mae'] = mean_absolute_error(predictions, actuals)
+            run_results['mse'] = mean_squared_error(predictions, actuals)
+            run_results['mape'] = mean_absolute_percentage_error(predictions, actuals)
+            run_results['smape'] = symmetric_mean_absolute_percentage_error(predictions, actuals)
+
+        mean = lambda errors: np.round(np.mean(errors), 2)
+        std = lambda errors: np.round(np.std(errors), 2)
+
+        error_set = {}
+
+        error_set['mae_mean'] = mean([result['mae'] for result in sample_results])
+        error_set['mse_mean'] = mean([result['mse'] for result in sample_results])
+        error_set['mape_mean'] = mean([result['mape'] for result in sample_results])
+        error_set['smape_mean'] = mean([result['smape'] for result in sample_results])
+
+        error_set['mae_std'] = std([result['mae'] for result in sample_results])
+        error_set['mse_std'] = std([result['mse'] for result in sample_results])
+        error_set['mape_std'] = std([result['mape'] for result in sample_results])
+        error_set['smape_std'] = std([result['smape'] for result in sample_results])
+
+        errors[regression_type].append(error_set)
+
+table_headings = [''] + [rt.value for rt in regression_types]
+
+mae_table = [table_headings]
+mse_table = [table_headings]
+mape_table = [table_headings]
+smape_table = [table_headings]
+time_table = [table_headings]
+
+for sample_i, num_samples in enumerate(samples):
+    sample_text = str(num_samples) + 'N:'
+    mae_table.append([sample_text])
+    mse_table.append([sample_text])
+    mape_table.append([sample_text])
+    smape_table.append([sample_text])
+    time_table.append([sample_text])
+
+    for regression_type in regression_types:
+        error_set = errors[regression_type][sample_i]
+        measurement_set = measurement_results[regression_type][sample_i]
 
         mae_text = '-'
         mse_text = '-'
@@ -98,36 +144,18 @@ for regression_type in regression_types:
         smape_text = '-'
         time_text = '-'
 
-        if len(errors) > 0:
-            mean = lambda errors: np.round(np.mean(errors), 2)
-            std = lambda errors: np.round(np.std(errors), 2)
-
-            mae_mean = mean(np.take(errors, 0, axis=1))
-            mse_mean = mean(np.take(errors, 1, axis=1))
-            mape_mean = mean(np.take(errors, 2, axis=1))
-            smape_mean = mean(np.take(errors, 3, axis=1))
-
-            mae_std = std(np.take(errors, 0, axis=1))
-            mse_std = std(np.take(errors, 1, axis=1))
-            mape_std = std(np.take(errors, 2, axis=1))
-            smape_std = std(np.take(errors, 3, axis=1))
-
-            mae_text = str(mae_mean) + ' ± ' + str(mae_std)
-            mse_text = str(mse_mean) + ' ± ' + str(mse_std)
-            mape_text = str(mape_mean) + '% ± ' + str(mape_std) + '%'
-            smape_text = str(smape_mean) + '% ± ' + str(smape_std) + '%'
-            time_text = str(time_elapsed) + 'ms'
+        if error_set is not None:
+            mae_text = str(error_set['mae_mean']) + ' ± ' + str(error_set['mae_std'])
+            mse_text = str(error_set['mse_mean']) + ' ± ' + str(error_set['mse_std'])
+            mape_text = str(error_set['mape_mean']) + '% ± ' + str(error_set['mape_std']) + '%'
+            smape_text = str(error_set['smape_mean']) + '% ± ' + str(error_set['smape_std']) + '%'
+            time_text = str(measurement_set['time']) + 'ms'
 
         mae_table[sample_i+1].append(mae_text)
         mse_table[sample_i+1].append(mse_text)
         mape_table[sample_i+1].append(mape_text)
         smape_table[sample_i+1].append(smape_text)
         time_table[sample_i+1].append(time_text)
-
-        print('', end='\r')
-        print('Completed ' + regression_type.value + ' evaluation for ' + str(num_samples) + 'N.', flush=True)
-
-total_time_elapsed = np.round(time.perf_counter() - total_start_time, 2)
 
 print('-' * 40)
 print('Results:')
