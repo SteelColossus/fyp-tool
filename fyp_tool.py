@@ -9,6 +9,7 @@ import pathlib
 import pickle
 from concurrent.futures import ThreadPoolExecutor
 from threading import Event
+import matplotlib.pyplot as plt
 
 import numpy as np
 from tabulate import tabulate
@@ -39,6 +40,36 @@ def read_csv_file(file_path):
     y = data[:, -1:][:, 0]
 
     return (X, y)
+
+def plot_grouped_bar_chart(title, y_label, y_key, x_values, y_results, label_names, y_err_key=None):
+    bar_width = 0.75 / len(label_names)
+    x_intervals = np.arange(len(x_values))
+
+    fig, ax = plt.subplots(figsize=(16, 8))
+    ax.set_title(title)
+    ax.set_xlabel('Regression Type')
+    ax.set_ylabel(y_label)
+
+    for index, label_name in enumerate(label_names):
+        y_values = [y_results[rt][index][y_key] for rt in regression_types]
+        y_err_values = None
+        
+        if y_err_key is not None:
+            y_err_values = [y_results[rt][index][y_err_key] for rt in regression_types]
+
+        # Have to set the offset of each bar here, otherwise they will stack
+        ax.bar(x_intervals + (bar_width * index), y_values, label=label_name, width=bar_width, yerr=y_err_values)
+
+    # Adjust the labels on the x axis to move them into the right position
+    ax.set_xticks(x_intervals + (bar_width * (len(label_names) - 1) / 2))
+    ax.set_xticklabels(x_values)
+    ax.grid(axis='y')
+    # Set the grid to appear below the bars in the chart
+    ax.set_axisbelow(True)
+    ax.legend()
+    
+    fig.savefig(f"{results_directory}/{title.lower().replace(' ', '_')}_graph.png")
+    plt.show()
 
 parser = argparse.ArgumentParser(description='Evaluate the prediction error for a machine learning model type and a software system.')
 parser.add_argument('system', help='the software system to evaluate')
@@ -247,3 +278,15 @@ for name, table in tables.items():
     np.savetxt(f"{results_directory}/{name}_results.csv", table, fmt='%s', delimiter=',')
 
 print(f"Results written to /{results_directory}.")
+
+x_values = [rt.value for rt in regression_types]
+label_names = [f"{sample}N" for sample in samples]
+
+for error, description in (('mae', 'Mean Absolute Error'), ('mse', 'Mean Squared Error'), ('mape', 'Mean Absolute Percentage Error'), ('smape', 'Symmetric Mean Absolute Percentage Error')):
+    plot_grouped_bar_chart(description, error.upper(), f"{error}_mean", x_values, errors, label_names, y_err_key=f"{error}_std")
+
+plot_grouped_bar_chart('Time Taken', 'Time per iteration (ms)', 'time', x_values, measurement_results, label_names)
+
+if not no_monitoring:
+    plot_grouped_bar_chart('CPU Usage', 'CPU (%)', 'cpu', x_values, measurement_results, label_names)
+    plot_grouped_bar_chart('Memory Usage', 'Memory (%)', 'memory', x_values, measurement_results, label_names)
