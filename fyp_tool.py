@@ -5,6 +5,8 @@ from error_calculations import mean_absolute_error, mean_squared_error, mean_abs
 import time
 import argparse
 import psutil
+import pathlib
+import pickle
 from concurrent.futures import ThreadPoolExecutor
 from threading import Event
 
@@ -167,28 +169,16 @@ for regression_type in regression_types:
 
 table_headings = [''] + [rt.value for rt in regression_types]
 
-mae_table = [table_headings]
-mse_table = [table_headings]
-mape_table = [table_headings]
-smape_table = [table_headings]
-time_table = [table_headings]
+tables = {'mae': [], 'mse': [], 'mape': [], 'smape': [], 'time': [], 'cpu': [], 'memory': []}
 
-if not no_monitoring:
-    cpu_table = [table_headings]
-    memory_table = [table_headings]
+for table in tables.values():
+    table.append(table_headings)
+    
+    for sample_i, num_samples in enumerate(samples):
+        sample_text = f"{num_samples}N:"
+        table.append([sample_text])
 
 for sample_i, num_samples in enumerate(samples):
-    sample_text = f"{num_samples}N:"
-    mae_table.append([sample_text])
-    mse_table.append([sample_text])
-    mape_table.append([sample_text])
-    smape_table.append([sample_text])
-    time_table.append([sample_text])
-
-    if not no_monitoring:
-        cpu_table.append([sample_text])
-        memory_table.append([sample_text])
-
     for regression_type in regression_types:
         error_set = errors[regression_type][sample_i]
         measurement_set = measurement_results[regression_type][sample_i]
@@ -198,50 +188,62 @@ for sample_i, num_samples in enumerate(samples):
         mape_text = '-'
         smape_text = '-'
         time_text = '-'
-
-        if not no_monitoring:
-            cpu_text = '-'
-            memory_text = '-'
+        cpu_text = '-'
+        memory_text = '-'
 
         if error_set is not None:
-            mae_text = f"{error_set['mae_mean']} ± {error_set['mae_std']}"
-            mse_text = f"{error_set['mse_mean']} ± {error_set['mse_std']}"
-            mape_text = f"{error_set['mape_mean']}% ± {error_set['mape_std']}%"
-            smape_text = f"{error_set['smape_mean']}% ± {error_set['smape_std']}%"
+            mae_text = f"{error_set['mae_mean']} +/- {error_set['mae_std']}"
+            mse_text = f"{error_set['mse_mean']} +/- {error_set['mse_std']}"
+            mape_text = f"{error_set['mape_mean']}% +/- {error_set['mape_std']}%"
+            smape_text = f"{error_set['smape_mean']}% +/- {error_set['smape_std']}%"
             time_text = f"{measurement_set['time']}ms"
             
             if not no_monitoring:
                 cpu_text = f"{measurement_set['cpu']}%"
                 memory_text = f"{measurement_set['memory']}%"
 
-        mae_table[sample_i+1].append(mae_text)
-        mse_table[sample_i+1].append(mse_text)
-        mape_table[sample_i+1].append(mape_text)
-        smape_table[sample_i+1].append(smape_text)
-        time_table[sample_i+1].append(time_text)
-
-        if not no_monitoring:
-            cpu_table[sample_i+1].append(cpu_text)
-            memory_table[sample_i+1].append(memory_text)
+        tables['mae'][sample_i+1].append(mae_text)
+        tables['mse'][sample_i+1].append(mse_text)
+        tables['mape'][sample_i+1].append(mape_text)
+        tables['smape'][sample_i+1].append(smape_text)
+        tables['time'][sample_i+1].append(time_text)
+        tables['cpu'][sample_i+1].append(cpu_text)
+        tables['memory'][sample_i+1].append(memory_text)
 
 print('-' * 40)
 print('Results:')
 print('MAE:')
-print(tabulate(mae_table, headers='firstrow', tablefmt='grid'))
+print(tabulate(tables['mae'], headers='firstrow', tablefmt='grid'))
 print('MSE:')
-print(tabulate(mse_table, headers='firstrow', tablefmt='grid'))
+print(tabulate(tables['mse'], headers='firstrow', tablefmt='grid'))
 print('MAPE:')
-print(tabulate(mape_table, headers='firstrow', tablefmt='grid'))
+print(tabulate(tables['mape'], headers='firstrow', tablefmt='grid'))
 print('SMAPE:')
-print(tabulate(smape_table, headers='firstrow', tablefmt='grid'))
+print(tabulate(tables['smape'], headers='firstrow', tablefmt='grid'))
 print('Time elapsed:')
-print(tabulate(time_table, headers='firstrow', tablefmt='grid'))
+print(tabulate(tables['time'], headers='firstrow', tablefmt='grid'))
 
 if not no_monitoring:
     print('CPU usage:')
-    print(tabulate(cpu_table, headers='firstrow', tablefmt='grid'))
+    print(tabulate(tables['cpu'], headers='firstrow', tablefmt='grid'))
     print('Memory usage:')
-    print(tabulate(memory_table, headers='firstrow', tablefmt='grid'))
+    print(tabulate(tables['memory'], headers='firstrow', tablefmt='grid'))
 
 print('-' * 40)
 print(f"Total time elapsed: {total_time_elapsed}s")
+
+results_directory = 'results'
+
+print(f"Writing results to directory /{results_directory}...")
+pathlib.Path('results').mkdir(exist_ok=True)
+
+with open(f"{results_directory}/model_results.pickle", 'wb') as model_results_file:
+    pickle.dump(model_results, model_results_file)
+
+for name, table in tables.items():
+    if (name == 'cpu' or name == 'memory') and no_monitoring:
+        continue
+
+    np.savetxt(f"{results_directory}/{name}_results.csv", table, fmt='%s', delimiter=',')
+
+print(f"Results written to /{results_directory}.")
