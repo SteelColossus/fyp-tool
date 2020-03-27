@@ -17,13 +17,13 @@ class RegressionType(Enum):
     TREES_BAGGING = 'Regression Trees with Bagging'
     DEEP = 'Deep Learning'
 
-def fit_ml_model(regression_type, X_train, y_train, skip_training=False):
-    model = get_ml_model(regression_type, X_train.shape[0], X_train.shape[1], skip_training)
+def fit_ml_model(regression_type, x_train, y_train, skip_training=False):
+    model = get_ml_model(regression_type, x_train.shape[0], x_train.shape[1], skip_training)
 
     if model is None:
         return None
 
-    model.fit(X_train, y_train)
+    model.fit(x_train, y_train)
 
     return model
 

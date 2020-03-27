@@ -11,13 +11,13 @@ epochs = 2000
 num_neurons = 128
 cross_folds = 10
 
-def fit_deep_model(X_train, y_train, skip_training=False):
+def fit_deep_model(x_train, y_train, skip_training=False):
     model = None
 
     if not skip_training:
-        model = get_trained_deep_model(X_train, y_train)
+        model = get_trained_deep_model(x_train, y_train)
     else:
-        model = get_deep_model(X_train.shape[1])
+        model = get_deep_model(x_train.shape[1])
 
     if model is None:
         return None
@@ -28,11 +28,11 @@ def fit_deep_model(X_train, y_train, skip_training=False):
     # log_dir = os.path.join("logs", datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
     # callbacks.append(callbacks.TensorBoard(log_dir=log_dir))
 
-    model.fit(X_train, y_train, epochs=epochs, verbose=0, callbacks=callbacks)
+    model.fit(x_train, y_train, epochs=epochs, verbose=0, callbacks=callbacks)
 
     return model
 
-def get_trained_deep_model(X_train, y_train):
+def get_trained_deep_model(x_train, y_train):
     optimal_learning_rate_per_layer = []
     optimal_mean_mae_per_layer = []
     num_layer_range = np.arange(2, 16)
@@ -42,11 +42,11 @@ def get_trained_deep_model(X_train, y_train):
         mae_list = []
 
         for learning_rate in learning_rate_range:
-            model = get_deep_model(X_train.shape[1], num_layers=num_layer, learning_rate=learning_rate)
+            model = get_deep_model(x_train.shape[1], num_layers=num_layer, learning_rate=learning_rate)
 
-            model.fit(X_train, y_train, epochs=epochs, verbose=0)
+            model.fit(x_train, y_train, epochs=epochs, verbose=0)
 
-            predictions = model.predict(X_train)
+            predictions = model.predict(x_train)
             mae = mean_absolute_error(predictions, y_train)
             mae_list.append(mae)
 
@@ -60,7 +60,7 @@ def get_trained_deep_model(X_train, y_train):
     optimal_num_layers = optimal_num_layers_index + num_layer_range[0]
     optimal_learning_rate = optimal_learning_rate_per_layer[optimal_num_layers_index]
 
-    model = get_deep_model(X_train.shape[1], num_layers=optimal_num_layers, learning_rate=optimal_learning_rate)
+    model = get_deep_model(x_train.shape[1], num_layers=optimal_num_layers, learning_rate=optimal_learning_rate)
     return model
 
 def get_deep_model(num_features, num_layers=10, learning_rate=0.001):

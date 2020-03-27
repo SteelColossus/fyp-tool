@@ -107,7 +107,7 @@ for regression_type in regression_types:
         start_time = time.perf_counter()
 
         for run_i in range(1, max_n + 1):
-            X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=num_features*num_samples, random_state=run_i-1)
+            x_train, x_test, y_train, y_test = train_test_split(X, y, train_size=num_features*num_samples, random_state=run_i-1)
 
             with ThreadPoolExecutor(max_workers=1) as executor:
                 if not no_monitoring:
@@ -120,12 +120,12 @@ for regression_type in regression_types:
                     y_train = (y_train / max_y) * 100
                     y_test = (y_test / max_y) * 100
 
-                    model = fit_deep_model(X_train, y_train, skip_training)
+                    model = fit_deep_model(x_train, y_train, skip_training)
 
                     y_train = (y_train / 100) * max_y
                     y_test = (y_test / 100) * max_y
                 else:
-                    model = fit_ml_model(regression_type, X_train, y_train, skip_training)
+                    model = fit_ml_model(regression_type, x_train, y_train, skip_training)
 
                 if not no_monitoring:
                     measuring_event.set()
@@ -140,7 +140,7 @@ for regression_type in regression_types:
             if model is None:
                 break
 
-            predictions = model.predict(X_test)
+            predictions = model.predict(x_test)
 
             model_results[regression_type][sample_i].append({
                 'actuals': y_test,
