@@ -36,10 +36,10 @@ def monitor_resources():
 def read_csv_file(file_path):
     data = np.genfromtxt(file_path, delimiter=',', skip_header=1)
 
-    X = data[:, :-1]
+    x = data[:, :-1]
     y = data[:, -1:][:, 0]
 
-    return (X, y)
+    return (x, y)
 
 def plot_grouped_bar_chart(title, y_label, y_key, x_values, y_results, label_names, y_err_key=None):
     bar_width = 0.75 / len(label_names)
@@ -83,8 +83,8 @@ max_n, samples, skip_training, no_monitoring = args.n, args.samples, args.skip_t
 
 file_path_to_open = 'data/' + args.system + '_AllMeasurements.csv'
 
-(X, y) = read_csv_file(file_path_to_open)
-num_features = X.shape[1]
+(x, y) = read_csv_file(file_path_to_open)
+num_features = x.shape[1]
 
 print(args.system + ':')
 print('-' * 40)
@@ -107,7 +107,7 @@ for regression_type in regression_types:
         start_time = time.perf_counter()
 
         for run_i in range(1, max_n + 1):
-            x_train, x_test, y_train, y_test = train_test_split(X, y, train_size=num_features*num_samples, random_state=run_i-1)
+            x_train, x_test, y_train, y_test = train_test_split(x, y, train_size=num_features*num_samples, random_state=run_i-1)
             max_y = None
 
             with ThreadPoolExecutor(max_workers=1) as executor:
