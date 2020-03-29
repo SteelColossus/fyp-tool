@@ -4,12 +4,12 @@ from error_calculations import mean_absolute_error, mean_squared_error, mean_abs
 
 import time
 import argparse
-import psutil
 import pathlib
 import pickle
 from concurrent.futures import ThreadPoolExecutor
 from threading import Event
 
+import psutil
 import numpy as np
 import matplotlib.pyplot as plt
 from tabulate import tabulate
@@ -93,7 +93,7 @@ args = parser.parse_args()
 
 max_n, samples, skip_training, no_monitoring = args.n, args.samples, args.skip_training, args.no_monitoring
 
-file_path_to_open = 'data/' + args.system + '_AllMeasurements.csv'
+file_path_to_open = f"data/{args.system}_AllMeasurements.csv"
 
 (x, y) = read_csv_file(file_path_to_open)
 num_features = x.shape[1]
@@ -179,8 +179,8 @@ for regression_type in regression_types:
             measurement_results[regression_type][sample_i]['memory'] = memory_percent
 
         print('', end='\r')
-        print('Completed ' + regression_type.value +
-              ' evaluation for ' + str(num_samples) + 'N.', flush=True)
+        print(
+            f"Completed {regression_type.value} evaluation for {num_samples}N.", flush=True)
 
 total_time_elapsed = np.round(time.perf_counter() - total_start_time, 2)
 errors = {rt: [] for rt in regression_types}
@@ -300,6 +300,9 @@ pathlib.Path('results').mkdir(exist_ok=True)
 
 with open(f"{results_directory}/model_results.pickle", 'wb') as model_results_file:
     pickle.dump(model_results, model_results_file)
+
+with open(f"{results_directory}/measurement_results.pickle", 'wb') as measurement_results_file:
+    pickle.dump(measurement_results, measurement_results_file)
 
 for name, table in tables.items():
     if (name == 'cpu' or name == 'memory') and no_monitoring:
