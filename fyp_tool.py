@@ -44,7 +44,7 @@ def read_csv_file(file_path):
     return (x, y)
 
 
-def plot_grouped_bar_chart(title, y_label, y_key, x_values, y_results, label_names, y_err_key=None):
+def plot_grouped_bar_chart(filename, title, y_label, y_key, x_values, y_results, label_names, y_err_key=None):
     bar_width = 0.75 / len(label_names)
     x_intervals = np.arange(len(x_values))
 
@@ -74,7 +74,7 @@ def plot_grouped_bar_chart(title, y_label, y_key, x_values, y_results, label_nam
     ax.legend()
 
     fig.savefig(
-        f"{results_directory}/{title.lower().replace(' ', '_')}_graph.png")
+        f"{results_directory}/{filename}_graph.png")
     plt.show()
 
 
@@ -293,10 +293,10 @@ if not no_monitoring:
 print('-' * 40)
 print(f"Total time elapsed: {total_time_elapsed}s")
 
-results_directory = 'results'
+results_directory = f"results/{args.system}"
 
 print(f"Writing results to directory /{results_directory}...")
-pathlib.Path('results').mkdir(exist_ok=True)
+pathlib.Path(results_directory).mkdir(exist_ok=True, parents=True)
 
 with open(f"{results_directory}/model_results.pickle", 'wb') as model_results_file:
     pickle.dump(model_results, model_results_file)
@@ -317,14 +317,14 @@ x_values = [rt.value for rt in regression_types]
 label_names = [f"{sample}N" for sample in samples]
 
 for error, description in (('mae', 'Mean Absolute Error'), ('mse', 'Mean Squared Error'), ('mape', 'Mean Absolute Percentage Error'), ('smape', 'Symmetric Mean Absolute Percentage Error')):
-    plot_grouped_bar_chart(description, error.upper(
-    ), f"{error}_mean", x_values, errors, label_names, y_err_key=f"{error}_std")
+    plot_grouped_bar_chart(
+        error, description, error.upper(), f"{error}_mean", x_values, errors, label_names, y_err_key=f"{error}_std")
 
-plot_grouped_bar_chart('Time Taken', 'Time per iteration (ms)',
+plot_grouped_bar_chart('time', 'Time Taken', 'Time per iteration (ms)',
                        'time', x_values, measurement_results, label_names)
 
 if not no_monitoring:
-    plot_grouped_bar_chart('CPU Usage', 'CPU (%)', 'cpu',
+    plot_grouped_bar_chart('cpu', 'CPU Usage', 'CPU (%)', 'cpu',
                            x_values, measurement_results, label_names)
-    plot_grouped_bar_chart('Memory Usage', 'Memory (%)',
+    plot_grouped_bar_chart('memory', 'Memory Usage', 'Memory (%)',
                            'memory', x_values, measurement_results, label_names)
