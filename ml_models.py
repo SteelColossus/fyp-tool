@@ -96,9 +96,7 @@ def get_bagging_model(base_estimator):
 
 def get_trained_bagging_model(base_estimator, num_samples, num_features):
     param_grid = {
-        'n_estimators': np.arange(2, 20 + 1),
-        'max_samples': np.arange(1, (num_samples - math.ceil(num_samples / cross_folds)) + 1),
-        'max_features': np.arange(1, num_features + 1)
+        'n_estimators': np.arange(2, 20 + 1)
     }
 
     return GridSearchCV(estimator=get_bagging_model(base_estimator), param_grid=param_grid, cv=cross_folds, scoring=scoring)
