@@ -9,13 +9,14 @@ import pathlib
 import pickle
 from concurrent.futures import ThreadPoolExecutor
 from threading import Event
-import matplotlib.pyplot as plt
 
 import numpy as np
+import matplotlib.pyplot as plt
 from tabulate import tabulate
 from sklearn.model_selection import train_test_split
 
 measuring_event = Event()
+
 
 def monitor_resources():
     cpu_usages = []
@@ -33,6 +34,7 @@ def monitor_resources():
 
     return (cpu_mean, memory_mean)
 
+
 def read_csv_file(file_path):
     data = np.genfromtxt(file_path, delimiter=',', skip_header=1)
 
@@ -40,6 +42,7 @@ def read_csv_file(file_path):
     y = data[:, -1:][:, 0]
 
     return (x, y)
+
 
 def plot_grouped_bar_chart(title, y_label, y_key, x_values, y_results, label_names, y_err_key=None):
     bar_width = 0.75 / len(label_names)
@@ -53,12 +56,14 @@ def plot_grouped_bar_chart(title, y_label, y_key, x_values, y_results, label_nam
     for index, label_name in enumerate(label_names):
         y_values = [y_results[rt][index][y_key] for rt in regression_types]
         y_err_values = None
-        
+
         if y_err_key is not None:
-            y_err_values = [y_results[rt][index][y_err_key] for rt in regression_types]
+            y_err_values = [y_results[rt][index][y_err_key]
+                            for rt in regression_types]
 
         # Have to set the offset of each bar here, otherwise they will stack
-        ax.bar(x_intervals + (bar_width * index), y_values, label=label_name, width=bar_width, yerr=y_err_values)
+        ax.bar(x_intervals + (bar_width * index), y_values,
+               label=label_name, width=bar_width, yerr=y_err_values)
 
     # Adjust the labels on the x axis to move them into the right position
     ax.set_xticks(x_intervals + (bar_width * (len(label_names) - 1) / 2))
@@ -67,16 +72,23 @@ def plot_grouped_bar_chart(title, y_label, y_key, x_values, y_results, label_nam
     # Set the grid to appear below the bars in the chart
     ax.set_axisbelow(True)
     ax.legend()
-    
-    fig.savefig(f"{results_directory}/{title.lower().replace(' ', '_')}_graph.png")
+
+    fig.savefig(
+        f"{results_directory}/{title.lower().replace(' ', '_')}_graph.png")
     plt.show()
 
-parser = argparse.ArgumentParser(description='Evaluate the prediction error for a machine learning model type and a software system.')
+
+parser = argparse.ArgumentParser(
+    description='Evaluate the prediction error for a machine learning model type and a software system.')
 parser.add_argument('system', help='the software system to evaluate')
-parser.add_argument('-n', help='the number of runs to repeat', type=int, default=30)
-parser.add_argument('--samples', help='the set of sample sizes to run for (in multiples of n)', type=int, nargs='+', choices=[1,2,3,4,5], default=[1,2,3,4,5])
-parser.add_argument('--skip-training', help='whether to skip training the machine learning models', action='store_true')
-parser.add_argument('--no-monitoring', help='whether to not monitor the CPU and memory usage', action='store_true')
+parser.add_argument(
+    '-n', help='the number of runs to repeat', type=int, default=30)
+parser.add_argument('--samples', help='the set of sample sizes to run for (in multiples of n)',
+                    type=int, nargs='+', choices=[1, 2, 3, 4, 5], default=[1, 2, 3, 4, 5])
+parser.add_argument(
+    '--skip-training', help='whether to skip training the machine learning models', action='store_true')
+parser.add_argument(
+    '--no-monitoring', help='whether to not monitor the CPU and memory usage', action='store_true')
 args = parser.parse_args()
 
 max_n, samples, skip_training, no_monitoring = args.n, args.samples, args.skip_training, args.no_monitoring
@@ -89,7 +101,8 @@ num_features = x.shape[1]
 print(args.system + ':')
 print('-' * 40)
 
-regression_types = [RegressionType.LINEAR, RegressionType.LINEAR_BAGGING, RegressionType.SVM, RegressionType.SVM_BAGGING, RegressionType.TREES, RegressionType.TREES_BAGGING, RegressionType.DEEP]
+regression_types = [RegressionType.LINEAR, RegressionType.LINEAR_BAGGING, RegressionType.SVM,
+                    RegressionType.SVM_BAGGING, RegressionType.TREES, RegressionType.TREES_BAGGING, RegressionType.DEEP]
 
 total_start_time = time.perf_counter()
 
@@ -107,7 +120,8 @@ for regression_type in regression_types:
         start_time = time.perf_counter()
 
         for run_i in range(1, max_n + 1):
-            x_train, x_test, y_train, y_test = train_test_split(x, y, train_size=num_features*num_samples, random_state=run_i-1)
+            x_train, x_test, y_train, y_test = train_test_split(
+                x, y, train_size=num_features*num_samples, random_state=run_i-1)
             max_y = None
 
             with ThreadPoolExecutor(max_workers=1) as executor:
@@ -124,7 +138,8 @@ for regression_type in regression_types:
 
                     y_train = (y_train * max_y) / 100
                 else:
-                    model = fit_ml_model(regression_type, x_train, y_train, skip_training)
+                    model = fit_ml_model(
+                        regression_type, x_train, y_train, skip_training)
 
                 if not no_monitoring:
                     measuring_event.set()
@@ -152,7 +167,8 @@ for regression_type in regression_types:
             print('.', end='', flush=True)
 
         # Per iteration in milliseconds
-        time_elapsed = np.round(((time.perf_counter() - start_time) * 1000) / max_n, 2)
+        time_elapsed = np.round(
+            ((time.perf_counter() - start_time) * 1000) / max_n, 2)
         measurement_results[regression_type][sample_i]['time'] = time_elapsed
 
         if not no_monitoring:
@@ -163,7 +179,8 @@ for regression_type in regression_types:
             measurement_results[regression_type][sample_i]['memory'] = memory_percent
 
         print('', end='\r')
-        print('Completed ' + regression_type.value + ' evaluation for ' + str(num_samples) + 'N.', flush=True)
+        print('Completed ' + regression_type.value +
+              ' evaluation for ' + str(num_samples) + 'N.', flush=True)
 
 total_time_elapsed = np.round(time.perf_counter() - total_start_time, 2)
 errors = {rt: [] for rt in regression_types}
@@ -180,33 +197,44 @@ for regression_type in regression_types:
 
             run_results['mae'] = mean_absolute_error(predictions, actuals)
             run_results['mse'] = mean_squared_error(predictions, actuals)
-            run_results['mape'] = mean_absolute_percentage_error(predictions, actuals)
-            run_results['smape'] = symmetric_mean_absolute_percentage_error(predictions, actuals)
+            run_results['mape'] = mean_absolute_percentage_error(
+                predictions, actuals)
+            run_results['smape'] = symmetric_mean_absolute_percentage_error(
+                predictions, actuals)
 
-        mean = lambda errors: np.round(np.mean(errors), 2)
-        std = lambda errors: np.round(np.std(errors), 2)
+        def mean(errors): return np.round(np.mean(errors), 2)
+        def std(errors): return np.round(np.std(errors), 2)
 
         error_set = {}
 
-        error_set['mae_mean'] = mean([result['mae'] for result in sample_results])
-        error_set['mse_mean'] = mean([result['mse'] for result in sample_results])
-        error_set['mape_mean'] = mean([result['mape'] for result in sample_results])
-        error_set['smape_mean'] = mean([result['smape'] for result in sample_results])
+        error_set['mae_mean'] = mean([result['mae']
+                                      for result in sample_results])
+        error_set['mse_mean'] = mean([result['mse']
+                                      for result in sample_results])
+        error_set['mape_mean'] = mean(
+            [result['mape'] for result in sample_results])
+        error_set['smape_mean'] = mean(
+            [result['smape'] for result in sample_results])
 
-        error_set['mae_std'] = std([result['mae'] for result in sample_results])
-        error_set['mse_std'] = std([result['mse'] for result in sample_results])
-        error_set['mape_std'] = std([result['mape'] for result in sample_results])
-        error_set['smape_std'] = std([result['smape'] for result in sample_results])
+        error_set['mae_std'] = std([result['mae']
+                                    for result in sample_results])
+        error_set['mse_std'] = std([result['mse']
+                                    for result in sample_results])
+        error_set['mape_std'] = std([result['mape']
+                                     for result in sample_results])
+        error_set['smape_std'] = std([result['smape']
+                                      for result in sample_results])
 
         errors[regression_type].append(error_set)
 
 table_headings = [''] + [rt.value for rt in regression_types]
 
-tables = {'mae': [], 'mse': [], 'mape': [], 'smape': [], 'time': [], 'cpu': [], 'memory': []}
+tables = {'mae': [], 'mse': [], 'mape': [],
+          'smape': [], 'time': [], 'cpu': [], 'memory': []}
 
 for table in tables.values():
     table.append(table_headings)
-    
+
     for sample_i, num_samples in enumerate(samples):
         sample_text = f"{num_samples}N:"
         table.append([sample_text])
@@ -230,7 +258,7 @@ for sample_i, num_samples in enumerate(samples):
             mape_text = f"{error_set['mape_mean']}% +/- {error_set['mape_std']}%"
             smape_text = f"{error_set['smape_mean']}% +/- {error_set['smape_std']}%"
             time_text = f"{measurement_set['time']}ms"
-            
+
             if not no_monitoring:
                 cpu_text = f"{measurement_set['cpu']}%"
                 memory_text = f"{measurement_set['memory']}%"
@@ -277,7 +305,8 @@ for name, table in tables.items():
     if (name == 'cpu' or name == 'memory') and no_monitoring:
         continue
 
-    np.savetxt(f"{results_directory}/{name}_results.csv", table, fmt='%s', delimiter=',')
+    np.savetxt(f"{results_directory}/{name}_results.csv",
+               table, fmt='%s', delimiter=',')
 
 print(f"Results written to /{results_directory}.")
 
@@ -285,10 +314,14 @@ x_values = [rt.value for rt in regression_types]
 label_names = [f"{sample}N" for sample in samples]
 
 for error, description in (('mae', 'Mean Absolute Error'), ('mse', 'Mean Squared Error'), ('mape', 'Mean Absolute Percentage Error'), ('smape', 'Symmetric Mean Absolute Percentage Error')):
-    plot_grouped_bar_chart(description, error.upper(), f"{error}_mean", x_values, errors, label_names, y_err_key=f"{error}_std")
+    plot_grouped_bar_chart(description, error.upper(
+    ), f"{error}_mean", x_values, errors, label_names, y_err_key=f"{error}_std")
 
-plot_grouped_bar_chart('Time Taken', 'Time per iteration (ms)', 'time', x_values, measurement_results, label_names)
+plot_grouped_bar_chart('Time Taken', 'Time per iteration (ms)',
+                       'time', x_values, measurement_results, label_names)
 
 if not no_monitoring:
-    plot_grouped_bar_chart('CPU Usage', 'CPU (%)', 'cpu', x_values, measurement_results, label_names)
-    plot_grouped_bar_chart('Memory Usage', 'Memory (%)', 'memory', x_values, measurement_results, label_names)
+    plot_grouped_bar_chart('CPU Usage', 'CPU (%)', 'cpu',
+                           x_values, measurement_results, label_names)
+    plot_grouped_bar_chart('Memory Usage', 'Memory (%)',
+                           'memory', x_values, measurement_results, label_names)

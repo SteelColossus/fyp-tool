@@ -11,6 +11,7 @@ epochs = 2000
 num_neurons = 128
 cross_folds = 10
 
+
 def fit_deep_model(x_train, y_train, skip_training=False):
     model = None
 
@@ -32,6 +33,7 @@ def fit_deep_model(x_train, y_train, skip_training=False):
 
     return model
 
+
 def get_trained_deep_model(x_train, y_train):
     optimal_learning_rate_per_layer = []
     optimal_mean_mae_per_layer = []
@@ -42,7 +44,8 @@ def get_trained_deep_model(x_train, y_train):
         mae_list = []
 
         for learning_rate in learning_rate_range:
-            model = get_deep_model(x_train.shape[1], num_layers=num_layer, learning_rate=learning_rate)
+            model = get_deep_model(
+                x_train.shape[1], num_layers=num_layer, learning_rate=learning_rate)
 
             model.fit(x_train, y_train, epochs=epochs, verbose=0)
 
@@ -60,12 +63,15 @@ def get_trained_deep_model(x_train, y_train):
     optimal_num_layers = optimal_num_layers_index + num_layer_range[0]
     optimal_learning_rate = optimal_learning_rate_per_layer[optimal_num_layers_index]
 
-    model = get_deep_model(x_train.shape[1], num_layers=optimal_num_layers, learning_rate=optimal_learning_rate)
+    model = get_deep_model(
+        x_train.shape[1], num_layers=optimal_num_layers, learning_rate=optimal_learning_rate)
     return model
+
 
 def get_deep_model(num_features, num_layers=10, learning_rate=0.001):
     net_layers = [
-        layers.Dense(num_neurons, activation='relu', input_shape=(num_features,))
+        layers.Dense(num_neurons, activation='relu',
+                     input_shape=(num_features,))
     ]
 
     for _ in range(0, num_layers - 1):
@@ -75,7 +81,9 @@ def get_deep_model(num_features, num_layers=10, learning_rate=0.001):
 
     model = models.Sequential(net_layers)
 
-    lr_schedule = optimizers.schedules.InverseTimeDecay(learning_rate, decay_steps=1, decay_rate=learning_rate/1000)
+    lr_schedule = optimizers.schedules.InverseTimeDecay(
+        learning_rate, decay_steps=1, decay_rate=learning_rate/1000)
 
-    model.compile(optimizer=optimizers.Adam(learning_rate=lr_schedule, clipvalue=1), loss='mse')
+    model.compile(optimizer=optimizers.Adam(
+        learning_rate=lr_schedule, clipvalue=1), loss='mse')
     return model

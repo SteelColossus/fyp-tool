@@ -8,6 +8,7 @@ from sklearn.model_selection import GridSearchCV
 cross_folds = 10
 scoring = 'neg_mean_squared_error'
 
+
 class RegressionType(Enum):
     LINEAR = 'Linear Regression'
     LINEAR_BAGGING = 'Linear Regression with Bagging'
@@ -17,8 +18,10 @@ class RegressionType(Enum):
     TREES_BAGGING = 'Regression Trees with Bagging'
     DEEP = 'Deep Learning'
 
+
 def fit_ml_model(regression_type, x_train, y_train, skip_training=False):
-    model = get_ml_model(regression_type, x_train.shape[0], x_train.shape[1], skip_training)
+    model = get_ml_model(
+        regression_type, x_train.shape[0], x_train.shape[1], skip_training)
 
     if model is None:
         return None
@@ -26,6 +29,7 @@ def fit_ml_model(regression_type, x_train, y_train, skip_training=False):
     model.fit(x_train, y_train)
 
     return model
+
 
 def get_ml_model(regression_type, num_samples, num_features, skip_training=False):
     if num_samples < cross_folds and not skip_training:
@@ -37,7 +41,8 @@ def get_ml_model(regression_type, num_samples, num_features, skip_training=False
         reg = get_linear_regression_model()
     elif regression_type == RegressionType.LINEAR_BAGGING:
         if not skip_training:
-            reg = get_trained_bagging_model(get_linear_regression_model(), num_samples, num_features)
+            reg = get_trained_bagging_model(
+                get_linear_regression_model(), num_samples, num_features)
         else:
             reg = get_bagging_model(get_linear_regression_model())
     elif regression_type == RegressionType.SVM:
@@ -47,7 +52,8 @@ def get_ml_model(regression_type, num_samples, num_features, skip_training=False
             reg = get_svm_model()
     elif regression_type == RegressionType.SVM_BAGGING:
         if not skip_training:
-            reg = get_trained_bagging_model(get_svm_model(), num_samples, num_features)
+            reg = get_trained_bagging_model(
+                get_svm_model(), num_samples, num_features)
         else:
             reg = get_bagging_model(get_svm_model())
     elif regression_type == RegressionType.TREES:
@@ -57,17 +63,21 @@ def get_ml_model(regression_type, num_samples, num_features, skip_training=False
             reg = get_regression_trees_model()
     elif regression_type == RegressionType.TREES_BAGGING:
         if not skip_training:
-            reg = get_trained_bagging_model(get_regression_trees_model(), num_samples, num_features)
+            reg = get_trained_bagging_model(
+                get_regression_trees_model(), num_samples, num_features)
         else:
             reg = get_bagging_model(get_regression_trees_model())
 
     return reg
 
+
 def get_linear_regression_model():
     return linear_model.LinearRegression()
 
+
 def get_svm_model():
     return svm.SVR()
+
 
 def get_trained_svm_model():
     param_grid = {
@@ -79,8 +89,10 @@ def get_trained_svm_model():
 
     return GridSearchCV(estimator=get_svm_model(), param_grid=param_grid, cv=cross_folds, scoring=scoring)
 
+
 def get_regression_trees_model():
     return tree.DecisionTreeRegressor()
+
 
 def get_trained_regression_trees_model(num_samples):
     param_grid = {
@@ -91,8 +103,10 @@ def get_trained_regression_trees_model(num_samples):
 
     return GridSearchCV(estimator=get_regression_trees_model(), param_grid=param_grid, cv=cross_folds, scoring=scoring)
 
+
 def get_bagging_model(base_estimator):
     return BaggingRegressor(base_estimator=base_estimator)
+
 
 def get_trained_bagging_model(base_estimator, num_samples, num_features):
     param_grid = {
