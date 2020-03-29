@@ -45,7 +45,7 @@ def plot_grouped_bar_chart(title, y_label, y_key, x_values, y_results, label_nam
     bar_width = 0.75 / len(label_names)
     x_intervals = np.arange(len(x_values))
 
-    fig, ax = plt.subplots(figsize=(16, 8))
+    fig, ax = plt.subplots(figsize=(20, 10))
     ax.set_title(title)
     ax.set_xlabel('Regression Type')
     ax.set_ylabel(y_label)
