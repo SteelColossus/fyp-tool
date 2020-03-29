@@ -1,5 +1,5 @@
 from ml_models import fit_ml_model, RegressionType
-from deep_models import fit_deep_model
+from deepperf_wrapper import fit_deep_model
 from error_calculations import mean_absolute_error, mean_squared_error, mean_absolute_percentage_error, symmetric_mean_absolute_percentage_error
 
 import time
@@ -108,6 +108,7 @@ for regression_type in regression_types:
 
         for run_i in range(1, max_n + 1):
             x_train, x_test, y_train, y_test = train_test_split(X, y, train_size=num_features*num_samples, random_state=run_i-1)
+            max_y = None
 
             with ThreadPoolExecutor(max_workers=1) as executor:
                 if not no_monitoring:
@@ -117,13 +118,11 @@ for regression_type in regression_types:
                 if regression_type == RegressionType.DEEP:
                     max_y = np.max(y_train)
 
-                    y_train = (y_train / max_y) * 100
-                    y_test = (y_test / max_y) * 100
+                    y_train = (y_train * 100) / max_y
 
                     model = fit_deep_model(x_train, y_train, skip_training)
 
-                    y_train = (y_train / 100) * max_y
-                    y_test = (y_test / 100) * max_y
+                    y_train = (y_train * max_y) / 100
                 else:
                     model = fit_ml_model(regression_type, x_train, y_train, skip_training)
 
@@ -141,6 +140,9 @@ for regression_type in regression_types:
                 break
 
             predictions = model.predict(x_test)
+
+            if regression_type == RegressionType.DEEP:
+                predictions = (predictions[:, 0] * max_y) / 100
 
             model_results[regression_type][sample_i].append({
                 'actuals': y_test,
