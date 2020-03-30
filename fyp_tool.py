@@ -75,7 +75,7 @@ def plot_grouped_bar_chart(filename, title, y_label, y_key, x_values, y_results,
 
         # Have to set the offset of each bar here, otherwise they will stack
         ax.bar(x_intervals + (bar_width * index), y_values,
-               label=label_name, width=bar_width, yerr=y_err_values)
+               label=label_name, width=bar_width, yerr=y_err_values, capsize=5)
 
     # Adjust the labels on the x axis to move them into the right position
     ax.set_xticks(x_intervals + (bar_width * (len(label_names) - 1) / 2))
