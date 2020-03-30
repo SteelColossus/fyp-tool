@@ -16,6 +16,8 @@ from tabulate import tabulate
 from sklearn.model_selection import train_test_split
 
 measuring_event = Event()
+# The current process this script is running on
+process = psutil.Process()
 
 
 def monitor_resources():
@@ -23,11 +25,12 @@ def monitor_resources():
     memory_usages = []
 
     while not measuring_event.is_set():
-        cpu_percent = psutil.cpu_percent(interval=0.2)
-        memory_percent = psutil.virtual_memory().percent
+        with process.oneshot():
+            cpu_percent = process.cpu_percent(interval=0.2)
+            memory_percent = process.memory_percent()
 
-        cpu_usages.append(cpu_percent)
-        memory_usages.append(memory_percent)
+            cpu_usages.append(cpu_percent)
+            memory_usages.append(memory_percent)
 
     cpu_mean = np.mean(cpu_usages)
     memory_mean = np.mean(memory_usages)
