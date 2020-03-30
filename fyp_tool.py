@@ -41,6 +41,15 @@ def read_csv_file(file_path):
     x = data[:, :-1]
     y = data[:, -1:][:, 0]
 
+    # Remove all features that are unused, i.e. all instances of them have the same value
+    unused_features = np.all(x == x[0, :], axis=0)
+    unused_indexes = np.flatnonzero(unused_features)
+    num_unused_features = len(unused_indexes)
+
+    if num_unused_features > 0:
+        x = np.delete(x, unused_indexes, axis=1)
+        print(f"Removed {num_unused_features} unused feature(s).")
+
     return (x, y)
 
 
@@ -95,11 +104,11 @@ max_n, samples, skip_training, no_monitoring = args.n, args.samples, args.skip_t
 
 file_path_to_open = f"data/{args.system}_AllMeasurements.csv"
 
-(x, y) = read_csv_file(file_path_to_open)
-num_features = x.shape[1]
-
 print(args.system + ':')
 print('-' * 40)
+
+(x, y) = read_csv_file(file_path_to_open)
+num_features = x.shape[1]
 
 regression_types = [RegressionType.LINEAR, RegressionType.LINEAR_BAGGING, RegressionType.SVM,
                     RegressionType.SVM_BAGGING, RegressionType.TREES, RegressionType.TREES_BAGGING, RegressionType.DEEP]
