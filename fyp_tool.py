@@ -166,6 +166,9 @@ for regression_type in regression_types:
         cpu_percentages = []
         memory_percentages = []
 
+        print(f"{regression_type.value}, {num_samples}N: 0/{max_n}",
+              end='', flush=True)
+
         start_time = time.perf_counter()
 
         for run_i in range(1, max_n + 1):
@@ -226,7 +229,9 @@ for regression_type in regression_types:
                 'predictions': predictions
             })
 
-            print('.', end='', flush=True)
+            print('', end='\r')
+            print(f"{regression_type.value}, {num_samples}N: {run_i}/{max_n}",
+                  end='', flush=True)
 
         # Per iteration in milliseconds
         time_elapsed = np.round(
