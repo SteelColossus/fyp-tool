@@ -66,11 +66,14 @@ def plot_grouped_bar_chart(filename, title, y_label, y_key, x_values, y_results,
     ax.set_ylabel(y_label)
 
     for index, label_name in enumerate(label_names):
-        y_values = [y_results[rt][index][y_key] for rt in regression_types]
+        y_values = [y_results[rt][index][y_key]
+                    if y_results[rt][index] is not None else 0
+                    for rt in regression_types]
         y_err_values = None
 
         if y_err_key is not None:
             y_err_values = [y_results[rt][index][y_err_key]
+                            if y_results[rt][index] is not None else 0
                             for rt in regression_types]
 
         # Have to set the offset of each bar here, otherwise they will stack
@@ -87,7 +90,6 @@ def plot_grouped_bar_chart(filename, title, y_label, y_key, x_values, y_results,
 
     fig.savefig(
         f"{results_directory}/{filename}_graph.png")
-    plt.show()
 
 
 parser = argparse.ArgumentParser(
@@ -201,7 +203,7 @@ for regression_type in regression_types:
     for sample_results in model_results[regression_type]:
         if len(sample_results) == 0:
             errors[regression_type].append(None)
-            break
+            continue
 
         for run_results in sample_results:
             actuals = run_results['actuals']
@@ -328,6 +330,8 @@ print(f"Results written to /{results_directory}.")
 x_values = [rt.value for rt in regression_types]
 label_names = [f"{sample}N" for sample in samples]
 
+print("Generating graphs...")
+
 for error, description in (('mae', 'Mean Absolute Error'), ('mse', 'Mean Squared Error'), ('mape', 'Mean Absolute Percentage Error'), ('smape', 'Symmetric Mean Absolute Percentage Error')):
     plot_grouped_bar_chart(
         error, description, error.upper(), f"{error}_mean", x_values, errors, label_names, y_err_key=f"{error}_std")
@@ -340,3 +344,5 @@ if not no_monitoring:
                            x_values, measurement_results, label_names)
     plot_grouped_bar_chart('memory', 'Memory Usage', 'Memory (%)',
                            'memory', x_values, measurement_results, label_names)
+
+print(f"Graphs generated and saved to /{results_directory}.")
