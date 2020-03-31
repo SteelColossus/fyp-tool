@@ -96,19 +96,23 @@ def plot_grouped_bar_chart(filename, title, y_label, y_key, x_values, y_results,
     ax.set_ylabel(y_label)
 
     for index, label_name in enumerate(label_names):
-        y_values = [y_results[rt][index][y_key]
-                    if y_results[rt][index] is not None else 0
-                    for rt in regression_types]
+        y_values = np.array([y_results[rt][index][y_key]
+                             if y_results[rt][index] is not None else 0
+                             for rt in regression_types])
         y_err_values = None
+        capsize = None
 
         if y_err_key is not None:
-            y_err_values = [y_results[rt][index][y_err_key]
-                            if y_results[rt][index] is not None else 0
-                            for rt in regression_types]
+            y_err_values = np.array([y_results[rt][index][y_err_key]
+                                     if y_results[rt][index] is not None else 0
+                                     for rt in regression_types])
+
+            if not np.all(y_err_values == 0):
+                capsize = 5
 
         # Have to set the offset of each bar here, otherwise they will stack
         ax.bar(x_intervals + (bar_width * index), y_values,
-               label=label_name, width=bar_width, yerr=y_err_values, capsize=5)
+               label=label_name, width=bar_width, yerr=y_err_values, capsize=capsize)
 
     # Adjust the labels on the x axis to move them into the right position
     ax.set_xticks(x_intervals + (bar_width * (len(label_names) - 1) / 2))
