@@ -39,6 +39,35 @@ def monitor_resources():
     return (cpu_mean, memory_mean)
 
 
+def get_system_filename(system_name):
+    system_filename = None
+
+    if system_name == 'Apache':
+        system_filename = 'Apache_AllMeasurements'
+    elif system_name == 'BDBC':
+        system_filename = 'BDBC_AllMeasurements'
+    elif system_name == 'SQL':
+        system_filename = 'SQL_AllMeasurements'
+    elif system_name == 'X264':
+        system_filename = 'X264_AllMeasurements'
+    elif system_name == 'FPGA_sort':
+        system_filename = 'SS-B2'
+    elif system_name == 'Apache_Storm':
+        system_filename = 'SS-K1'
+    elif system_name == 'LLVM':
+        system_filename = 'SS-L1'
+    elif system_name == 'Trimesh':
+        system_filename = 'SS-M2'
+    elif system_name == 'X264-DB':
+        system_filename = 'SS-N1'
+    elif system_name == 'SaC':
+        system_filename = 'SS-O2'
+    else:
+        system_filename = system_name
+
+    return system_filename
+
+
 def read_csv_file(file_path):
     data = np.genfromtxt(file_path, delimiter=',', skip_header=1)
 
@@ -106,11 +135,12 @@ parser.add_argument(
     '--no-monitoring', help='whether to not monitor the CPU and memory usage', action='store_true')
 args = parser.parse_args()
 
-max_n, samples, skip_training, no_monitoring = args.n, args.samples, args.skip_training, args.no_monitoring
+system_name, max_n, samples, skip_training, no_monitoring = args.system, args.n, args.samples, args.skip_training, args.no_monitoring
 
-file_path_to_open = f"data/{args.system}_AllMeasurements.csv"
+system_filename = get_system_filename(system_name)
+file_path_to_open = f"data/{system_filename}.csv"
 
-print(args.system + ':')
+print(system_name + ':')
 print('-' * 40)
 
 (x, y) = read_csv_file(file_path_to_open)
@@ -137,7 +167,7 @@ for regression_type in regression_types:
         for run_i in range(1, max_n + 1):
             x_train, x_test, y_train, y_test = train_test_split(
                 x, y, train_size=num_features*num_samples, random_state=run_i-1)
-            max_y = None
+            max_x, max_y = None, None
 
             with ThreadPoolExecutor(max_workers=1) as executor:
                 if not no_monitoring:
@@ -145,12 +175,21 @@ for regression_type in regression_types:
                     monitoring_thread = executor.submit(monitor_resources)
 
                 if regression_type == RegressionType.DEEP:
+                    max_x = np.amax(x_train, axis=0)
+
+                    max_x[max_x == 0] = 1
+
                     max_y = np.max(y_train)
 
+                    if max_y == 0:
+                        max_y = 1
+
+                    x_train = x_train / max_x
                     y_train = (y_train * 100) / max_y
 
                     model = fit_deep_model(x_train, y_train, skip_training)
 
+                    x_train = x_train * max_x
                     y_train = (y_train * max_y) / 100
                 else:
                     model = fit_ml_model(
@@ -169,9 +208,13 @@ for regression_type in regression_types:
             if model is None:
                 break
 
+            if regression_type == RegressionType.DEEP:
+                x_test = x_test / max_x
+
             predictions = model.predict(x_test)
 
             if regression_type == RegressionType.DEEP:
+                x_test = x_test * max_x
                 predictions = (predictions[:, 0] * max_y) / 100
 
             model_results[regression_type][sample_i].append({
@@ -310,7 +353,7 @@ print(f"Total time elapsed: {total_time_elapsed}s")
 
 formatted_date = datetime.now().strftime('%Y%m%d-%H%M%S')
 
-results_directory = f"results/{args.system}-{formatted_date}"
+results_directory = f"results/{system_name}-{formatted_date}"
 
 print(f"Writing results to directory /{results_directory}...")
 pathlib.Path(results_directory).mkdir(exist_ok=True, parents=True)
