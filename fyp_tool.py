@@ -144,6 +144,10 @@ system_name, max_n, samples, skip_training, no_monitoring = args.system, args.n,
 system_filename = get_system_filename(system_name)
 file_path_to_open = f"data/{system_filename}.csv"
 
+start_date = datetime.now().replace(microsecond=0)
+print(f"Started at {start_date.isoformat()}.")
+
+print('-' * 40)
 print(system_name + ':')
 print('-' * 40)
 
@@ -360,7 +364,7 @@ if not no_monitoring:
 print('-' * 40)
 print(f"Total time elapsed: {total_time_elapsed}s")
 
-formatted_date = datetime.now().strftime('%Y%m%d-%H%M%S')
+formatted_date = start_date.strftime('%Y%m%d-%H%M%S')
 
 results_directory = f"results/{system_name}-{formatted_date}"
 
