@@ -6,6 +6,7 @@ import time
 import argparse
 import pathlib
 import pickle
+from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 from threading import Event
 
@@ -307,7 +308,9 @@ if not no_monitoring:
 print('-' * 40)
 print(f"Total time elapsed: {total_time_elapsed}s")
 
-results_directory = f"results/{args.system}"
+formatted_date = datetime.now().strftime('%Y%m%d-%H%M%S')
+
+results_directory = f"results/{args.system}-{formatted_date}"
 
 print(f"Writing results to directory /{results_directory}...")
 pathlib.Path(results_directory).mkdir(exist_ok=True, parents=True)
