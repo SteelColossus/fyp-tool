@@ -97,7 +97,7 @@ def get_trained_svm_model():
         }
     ]
 
-    return GridSearchCV(estimator=get_svm_model(), param_grid=param_grid, cv=cross_folds, scoring=scoring, verbose=10)
+    return GridSearchCV(estimator=get_svm_model(), param_grid=param_grid, cv=cross_folds, scoring=scoring)
 
 
 def get_regression_trees_model():
@@ -125,7 +125,7 @@ def get_trained_regression_trees_model(num_samples):
 
         param_grid.append(new_param_grid)
 
-    return GridSearchCV(estimator=get_regression_trees_model(), param_grid=param_grid, cv=cross_folds, scoring=scoring, verbose=10)
+    return GridSearchCV(estimator=get_regression_trees_model(), param_grid=param_grid, cv=cross_folds, scoring=scoring)
 
 
 def get_bagging_model(base_estimator):
