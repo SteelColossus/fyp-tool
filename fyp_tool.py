@@ -178,7 +178,18 @@ for regression_type in regression_types:
         for run_i in range(1, max_n + 1):
             x_train, x_test, y_train, y_test = train_test_split(
                 x, y, train_size=num_features*num_samples, random_state=run_i-1)
-            max_x, max_y = None, None
+
+            max_x = np.amax(x_train, axis=0)
+            max_x[max_x == 0] = 1
+
+            max_y = np.max(y_train)
+
+            if max_y == 0:
+                max_y = 1
+
+            x_train = x_train / max_x
+            x_test = x_test / max_x
+            y_train = (y_train * 100) / max_y
 
             with ThreadPoolExecutor(max_workers=1) as executor:
                 if not no_monitoring:
@@ -186,22 +197,7 @@ for regression_type in regression_types:
                     monitoring_thread = executor.submit(monitor_resources)
 
                 if regression_type == RegressionType.DEEP:
-                    max_x = np.amax(x_train, axis=0)
-
-                    max_x[max_x == 0] = 1
-
-                    max_y = np.max(y_train)
-
-                    if max_y == 0:
-                        max_y = 1
-
-                    x_train = x_train / max_x
-                    y_train = (y_train * 100) / max_y
-
                     model = fit_deep_model(x_train, y_train, skip_training)
-
-                    x_train = x_train * max_x
-                    y_train = (y_train * max_y) / 100
                 else:
                     model = fit_ml_model(
                         regression_type, x_train, y_train, skip_training)
@@ -219,14 +215,16 @@ for regression_type in regression_types:
             if model is None:
                 break
 
-            if regression_type == RegressionType.DEEP:
-                x_test = x_test / max_x
-
             predictions = model.predict(x_test)
 
             if regression_type == RegressionType.DEEP:
-                x_test = x_test * max_x
-                predictions = (predictions[:, 0] * max_y) / 100
+                predictions = predictions[:, 0]
+
+            predictions = (predictions * max_y) / 100
+
+            x_train = x_train * max_x
+            y_train = (y_train * max_y) / 100
+            x_test = x_test * max_x
 
             model_results[regression_type][sample_i].append({
                 'actuals': y_test,
