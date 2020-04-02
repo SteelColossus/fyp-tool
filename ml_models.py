@@ -1,4 +1,3 @@
-import math
 import numpy as np
 from enum import Enum, auto
 from sklearn import linear_model, svm, tree
@@ -32,7 +31,7 @@ def fit_ml_model(regression_type, x_train, y_train, skip_training=False):
 
 
 def get_ml_model(regression_type, num_samples, num_features, skip_training=False):
-    if num_samples < cross_folds and not skip_training:
+    if num_samples < cross_folds and not skip_training and regression_type != RegressionType.LINEAR:
         return None
 
     reg = None
@@ -76,32 +75,57 @@ def get_linear_regression_model():
 
 
 def get_svm_model():
-    return svm.SVR()
+    # These are the default hyperparameters for version 0.22 of scikit-learn: https://scikit-learn.org/0.22/modules/generated/sklearn.svm.SVR.html
+    # They are set here for clarity and compatibility with other versions
+    return svm.SVR(kernel='rbf', C=1.0, gamma='scale', epsilon=0.1)
 
 
 def get_trained_svm_model():
-    param_grid = {
-        'kernel': ['linear', 'poly', 'rbf'],
-        'C': np.logspace(-2, 3, num=10),
-        'gamma': np.logspace(-3, 0, num=10),
-        'epsilon': np.logspace(-3, 0, num=5)
-    }
+    # The linear kernel can take a long amount of time when the regularization parameter C is high, so they are separated out here
+    param_grid = [
+        {
+            'kernel': ['linear'],
+            'C': np.logspace(-2, 1, num=10),
+            'gamma': np.logspace(-3, 0, num=10),
+            'epsilon': np.logspace(-3, 0, num=5)
+        },
+        {
+            'kernel': ['poly', 'rbf'],
+            'C': np.logspace(-2, 3, num=10),
+            'gamma': np.logspace(-3, 0, num=10),
+            'epsilon': np.logspace(-3, 0, num=5)
+        }
+    ]
 
-    return GridSearchCV(estimator=get_svm_model(), param_grid=param_grid, cv=cross_folds, scoring=scoring)
+    return GridSearchCV(estimator=get_svm_model(), param_grid=param_grid, cv=cross_folds, scoring=scoring, verbose=10)
 
 
 def get_regression_trees_model():
-    return tree.DecisionTreeRegressor()
+    # These are the default hyperparameters for version 0.22 of scikit-learn: https://scikit-learn.org/0.22/modules/generated/sklearn.tree.DecisionTreeRegressor.html
+    # They are set here for clarity and compatibility with other versions
+    return tree.DecisionTreeRegressor(min_samples_split=2, min_samples_leaf=1, ccp_alpha=0.0)
 
 
 def get_trained_regression_trees_model(num_samples):
-    param_grid = {
-        'min_samples_split': np.arange(2, num_samples + 1),
-        'min_samples_leaf': np.arange(1, math.ceil((num_samples + 1) / 3)),
+    param_grid = []
+
+    base_param_grid = {
         'ccp_alpha': np.logspace(-6, -2, num=10)
     }
 
-    return GridSearchCV(estimator=get_regression_trees_model(), param_grid=param_grid, cv=cross_folds, scoring=scoring)
+    for min_samples_split in range(2, num_samples + 1):
+        min_samples_leaf = int(min_samples_split / 3)
+
+        if min_samples_leaf <= 0:
+            min_samples_leaf = 1
+
+        new_param_grid = base_param_grid.copy()
+        new_param_grid['min_samples_split'] = [min_samples_split]
+        new_param_grid['min_samples_leaf'] = [min_samples_leaf]
+
+        param_grid.append(new_param_grid)
+
+    return GridSearchCV(estimator=get_regression_trees_model(), param_grid=param_grid, cv=cross_folds, scoring=scoring, verbose=10)
 
 
 def get_bagging_model(base_estimator):
