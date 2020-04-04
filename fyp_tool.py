@@ -96,16 +96,16 @@ def plot_grouped_bar_chart(filename, title, y_label, y_key, x_values, y_results,
     ax.set_ylabel(y_label)
 
     for index, label_name in enumerate(label_names):
-        y_values = np.array([y_results[rt][index][y_key]
-                             if y_results[rt][index] is not None else 0
-                             for rt in regression_types])
+        y_values = np.asarray([y_results[rt.name][index][y_key]
+                               if y_results[rt.name][index] is not None else 0
+                               for rt in regression_types])
         y_err_values = None
         capsize = None
 
         if y_err_key is not None:
-            y_err_values = np.array([y_results[rt][index][y_err_key]
-                                     if y_results[rt][index] is not None else 0
-                                     for rt in regression_types])
+            y_err_values = np.asarray([y_results[rt.name][index][y_err_key]
+                                       if y_results[rt.name][index] is not None else 0
+                                       for rt in regression_types])
 
             if not np.all(y_err_values == 0):
                 capsize = 5
@@ -159,13 +159,13 @@ regression_types = [RegressionType.LINEAR, RegressionType.LINEAR_BAGGING, Regres
 
 total_start_time = time.perf_counter()
 
-model_results = {rt: [] for rt in regression_types}
-measurement_results = {rt: [] for rt in regression_types}
+model_results = {rt.name: [] for rt in regression_types}
+measurement_results = {rt.name: [] for rt in regression_types}
 
 for regression_type in regression_types:
     for sample_i, num_samples in enumerate(samples):
-        model_results[regression_type].append([])
-        measurement_results[regression_type].append({})
+        model_results[regression_type.name].append([])
+        measurement_results[regression_type.name].append({})
 
         cpu_percentages = []
         memory_percentages = []
@@ -226,7 +226,7 @@ for regression_type in regression_types:
             y_train = (y_train * max_y) / 100
             x_test = x_test * max_x
 
-            model_results[regression_type][sample_i].append({
+            model_results[regression_type.name][sample_i].append({
                 'actuals': y_test,
                 'predictions': predictions
             })
@@ -238,26 +238,26 @@ for regression_type in regression_types:
         # Per iteration in milliseconds
         time_elapsed = np.round(
             ((time.perf_counter() - start_time) * 1000) / max_n, 2)
-        measurement_results[regression_type][sample_i]['time'] = time_elapsed
+        measurement_results[regression_type.name][sample_i]['time'] = time_elapsed
 
         if not no_monitoring:
             cpu_percent = np.round(np.mean(cpu_percentages), 2)
             memory_percent = np.round(np.mean(memory_percentages), 2)
 
-            measurement_results[regression_type][sample_i]['cpu'] = cpu_percent
-            measurement_results[regression_type][sample_i]['memory'] = memory_percent
+            measurement_results[regression_type.name][sample_i]['cpu'] = cpu_percent
+            measurement_results[regression_type.name][sample_i]['memory'] = memory_percent
 
         print('', end='\r')
         print(
             f"Completed {regression_type.value} evaluation for {num_samples}N.", flush=True)
 
 total_time_elapsed = np.round(time.perf_counter() - total_start_time, 2)
-errors = {rt: [] for rt in regression_types}
+errors = {rt.name: [] for rt in regression_types}
 
 for regression_type in regression_types:
-    for sample_results in model_results[regression_type]:
+    for sample_results in model_results[regression_type.name]:
         if len(sample_results) == 0:
-            errors[regression_type].append(None)
+            errors[regression_type.name].append(None)
             continue
 
         for run_results in sample_results:
@@ -294,7 +294,7 @@ for regression_type in regression_types:
         error_set['smape_std'] = std([result['smape']
                                       for result in sample_results])
 
-        errors[regression_type].append(error_set)
+        errors[regression_type.name].append(error_set)
 
 table_headings = [''] + [rt.value for rt in regression_types]
 
@@ -310,8 +310,8 @@ for table in tables.values():
 
 for sample_i, num_samples in enumerate(samples):
     for regression_type in regression_types:
-        error_set = errors[regression_type][sample_i]
-        measurement_set = measurement_results[regression_type][sample_i]
+        error_set = errors[regression_type.name][sample_i]
+        measurement_set = measurement_results[regression_type.name][sample_i]
 
         mae_text = '-'
         mse_text = '-'
