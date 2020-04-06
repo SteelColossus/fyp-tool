@@ -96,16 +96,16 @@ def plot_grouped_bar_chart(filename, title, y_label, y_key, x_values, y_results,
     ax.set_ylabel(y_label)
 
     for index, label_name in enumerate(label_names):
-        y_values = np.asarray([y_results[rt.name][index][y_key]
-                               if y_results[rt.name][index] is not None else 0
-                               for rt in regression_types])
+        y_values = np.asarray([y_results[key][index][y_key]
+                               if y_results[key][index] is not None else 0
+                               for key in y_results])
         y_err_values = None
         capsize = None
 
         if y_err_key is not None:
-            y_err_values = np.asarray([y_results[rt.name][index][y_err_key]
-                                       if y_results[rt.name][index] is not None else 0
-                                       for rt in regression_types])
+            y_err_values = np.asarray([y_results[key][index][y_err_key]
+                                       if y_results[key][index] is not None else 0
+                                       for key in y_results])
 
             if not np.all(y_err_values == 0):
                 capsize = 5
@@ -124,6 +124,7 @@ def plot_grouped_bar_chart(filename, title, y_label, y_key, x_values, y_results,
 
     fig.savefig(
         f"{results_directory}/{filename}_graph.png")
+    plt.close()
 
 
 parser = argparse.ArgumentParser(
@@ -252,12 +253,12 @@ for regression_type in regression_types:
             f"Completed {regression_type.value} evaluation for {num_samples}N.", flush=True)
 
 total_time_elapsed = np.round(time.perf_counter() - total_start_time, 2)
-errors = {rt.name: [] for rt in regression_types}
+errors = {key: [] for key in model_results}
 
-for regression_type in regression_types:
-    for sample_results in model_results[regression_type.name]:
+for regression_name in errors:
+    for sample_results in model_results[regression_name]:
         if len(sample_results) == 0:
-            errors[regression_type.name].append(None)
+            errors[regression_name].append(None)
             continue
 
         for run_results in sample_results:
@@ -294,7 +295,7 @@ for regression_type in regression_types:
         error_set['smape_std'] = std([result['smape']
                                       for result in sample_results])
 
-        errors[regression_type.name].append(error_set)
+        errors[regression_name].append(error_set)
 
 table_headings = [''] + [rt.value for rt in regression_types]
 
