@@ -122,6 +122,10 @@ def plot_grouped_bar_chart(filename, title, y_label, y_key, x_values, y_results,
             if not np.all(y_err_values == 0):
                 capsize = 5
 
+            # Set the lower bound of the errors on the graph to be zero
+            y_err_values = [np.array([err if y_values[i] - err >= 0 else y_values[i]
+                                      for i, err in enumerate(y_err_values)]), y_err_values]
+
         # Have to set the offset of each bar here, otherwise they will stack
         ax.bar(x_intervals + (bar_width * index), y_values,
                label=label_name, width=bar_width, yerr=y_err_values, capsize=capsize)
