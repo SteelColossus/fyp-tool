@@ -21,7 +21,7 @@ measuring_event = Event()
 process = psutil.Process()
 
 
-def two_sf_round(val):
+def four_sf_round(val):
     rounded_val = None
 
     if val < 100:
@@ -253,12 +253,13 @@ for regression_type in regression_types:
                   end='', flush=True)
 
         # Per iteration in milliseconds
-        time_elapsed = two_sf_round((time.perf_counter() - start_time) / max_n)
+        time_elapsed = four_sf_round(
+            (time.perf_counter() - start_time) / max_n)
         measurement_results[regression_type.name][sample_i]['time'] = time_elapsed
 
         if not no_monitoring:
-            cpu_percent = two_sf_round(np.mean(cpu_percentages))
-            memory_percent = two_sf_round(np.mean(memory_percentages))
+            cpu_percent = four_sf_round(np.mean(cpu_percentages))
+            memory_percent = four_sf_round(np.mean(memory_percentages))
 
             measurement_results[regression_type.name][sample_i]['cpu'] = cpu_percent
             measurement_results[regression_type.name][sample_i]['memory'] = memory_percent
@@ -267,7 +268,7 @@ for regression_type in regression_types:
         print(
             f"Completed {regression_type.value} evaluation for {num_samples}N.", flush=True)
 
-total_time_elapsed = two_sf_round(
+total_time_elapsed = four_sf_round(
     (time.perf_counter() - total_start_time) / 60)
 errors = {key: [] for key in model_results}
 
@@ -288,8 +289,8 @@ for regression_name in errors:
             run_results['smape'] = symmetric_mean_absolute_percentage_error(
                 predictions, actuals)
 
-        def mean(errors): return two_sf_round(np.mean(errors))
-        def std(errors): return two_sf_round(np.std(errors))
+        def mean(errors): return four_sf_round(np.mean(errors))
+        def std(errors): return four_sf_round(np.std(errors))
 
         error_set = {}
 
