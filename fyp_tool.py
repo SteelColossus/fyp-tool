@@ -367,7 +367,7 @@ formatted_date = start_date.strftime('%Y%m%d-%H%M%S')
 
 results_directory = f"results/{system_name}-{formatted_date}"
 
-print(f"Writing results to directory /{results_directory}...")
+print(f"Writing results to directory {results_directory}...")
 pathlib.Path(results_directory).mkdir(exist_ok=True, parents=True)
 
 with open(f"{results_directory}/model_results.pickle", 'wb') as model_results_file:
@@ -383,7 +383,7 @@ for name, table in tables.items():
     np.savetxt(f"{results_directory}/{name}_results.csv",
                table, fmt='%s', delimiter=',')
 
-print(f"Results written to /{results_directory}.")
+print(f"Results written to {results_directory}.")
 
 x_values = [rt.value for rt in regression_types]
 label_names = [f"{sample}N" for sample in samples]
@@ -403,4 +403,4 @@ if not no_monitoring:
     plot_grouped_bar_chart('memory', 'Memory Usage', 'Memory (%)',
                            'memory', x_values, measurement_results, label_names)
 
-print(f"Graphs generated and saved to /{results_directory}.")
+print(f"Graphs generated and saved to {results_directory}.")
