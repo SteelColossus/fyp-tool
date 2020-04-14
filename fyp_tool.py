@@ -21,6 +21,18 @@ measuring_event = Event()
 process = psutil.Process()
 
 
+def two_sf_round(val):
+    rounded_val = None
+
+    if val < 100:
+        rounded_val = np.round(val, 2)
+    else:
+        magnitude = int(np.log10(val))
+        rounded_val = np.round(val, 4 - magnitude - 1)
+
+    return rounded_val
+
+
 def monitor_resources():
     cpu_usages = []
     memory_usages = []
@@ -237,13 +249,12 @@ for regression_type in regression_types:
                   end='', flush=True)
 
         # Per iteration in milliseconds
-        time_elapsed = np.round(
-            ((time.perf_counter() - start_time) * 1000) / max_n, 2)
+        time_elapsed = two_sf_round((time.perf_counter() - start_time) / max_n)
         measurement_results[regression_type.name][sample_i]['time'] = time_elapsed
 
         if not no_monitoring:
-            cpu_percent = np.round(np.mean(cpu_percentages), 2)
-            memory_percent = np.round(np.mean(memory_percentages), 2)
+            cpu_percent = two_sf_round(np.mean(cpu_percentages))
+            memory_percent = two_sf_round(np.mean(memory_percentages))
 
             measurement_results[regression_type.name][sample_i]['cpu'] = cpu_percent
             measurement_results[regression_type.name][sample_i]['memory'] = memory_percent
@@ -252,7 +263,8 @@ for regression_type in regression_types:
         print(
             f"Completed {regression_type.value} evaluation for {num_samples}N.", flush=True)
 
-total_time_elapsed = np.round(time.perf_counter() - total_start_time, 2)
+total_time_elapsed = two_sf_round(
+    (time.perf_counter() - total_start_time) / 60)
 errors = {key: [] for key in model_results}
 
 for regression_name in errors:
@@ -272,8 +284,8 @@ for regression_name in errors:
             run_results['smape'] = symmetric_mean_absolute_percentage_error(
                 predictions, actuals)
 
-        def mean(errors): return np.round(np.mean(errors), 2)
-        def std(errors): return np.round(np.std(errors), 2)
+        def mean(errors): return two_sf_round(np.mean(errors))
+        def std(errors): return two_sf_round(np.std(errors))
 
         error_set = {}
 
@@ -327,7 +339,7 @@ for sample_i, num_samples in enumerate(samples):
             mse_text = f"{error_set['mse_mean']} +/- {error_set['mse_std']}"
             mape_text = f"{error_set['mape_mean']}% +/- {error_set['mape_std']}%"
             smape_text = f"{error_set['smape_mean']}% +/- {error_set['smape_std']}%"
-            time_text = f"{measurement_set['time']}ms"
+            time_text = f"{measurement_set['time']}s"
 
             if not no_monitoring:
                 cpu_text = f"{measurement_set['cpu']}%"
@@ -361,7 +373,7 @@ if not no_monitoring:
     print(tabulate(tables['memory'], headers='firstrow', tablefmt='grid'))
 
 print('-' * 40)
-print(f"Total time elapsed: {total_time_elapsed}s")
+print(f"Total time elapsed: {total_time_elapsed} minutes")
 
 formatted_date = start_date.strftime('%Y%m%d-%H%M%S')
 
@@ -394,7 +406,7 @@ for error, description in (('mae', 'Mean Absolute Error'), ('mse', 'Mean Squared
     plot_grouped_bar_chart(
         error, description, error.upper(), f"{error}_mean", x_values, errors, label_names, y_err_key=f"{error}_std")
 
-plot_grouped_bar_chart('time', 'Time Taken', 'Time per iteration (ms)',
+plot_grouped_bar_chart('time', 'Time Taken', 'Time per iteration (s)',
                        'time', x_values, measurement_results, label_names)
 
 if not no_monitoring:
