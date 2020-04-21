@@ -20,6 +20,9 @@ measuring_event = Event()
 # The current process this script is running on
 process = psutil.Process()
 
+# Increase the font size of produced graphs
+plt.rcParams.update({'font.size': 11})
+
 
 def four_sf_round(val):
     rounded_val = None
@@ -387,17 +390,17 @@ results_directory = f"results/{system_name}-{formatted_date}"
 print(f"Writing results to directory {results_directory}...")
 pathlib.Path(results_directory).mkdir(exist_ok=True, parents=True)
 
-with open(f"{results_directory}/model_results.pickle", 'wb') as model_results_file:
+with open(f"{results_directory}/{system_name}_model_results.pickle", 'wb') as model_results_file:
     pickle.dump(model_results, model_results_file)
 
-with open(f"{results_directory}/measurement_results.pickle", 'wb') as measurement_results_file:
+with open(f"{results_directory}/{system_name}_measurement_results.pickle", 'wb') as measurement_results_file:
     pickle.dump(measurement_results, measurement_results_file)
 
 for name, table in tables.items():
     if (name == 'cpu' or name == 'memory') and no_monitoring:
         continue
 
-    np.savetxt(f"{results_directory}/{name}_results.csv",
+    np.savetxt(f"{results_directory}/{system_name}_{name}_results.csv",
                table, fmt='%s', delimiter=',')
 
 print(f"Results written to {results_directory}.")
@@ -409,15 +412,15 @@ print("Generating graphs...")
 
 for error, description in (('mae', 'Mean Absolute Error'), ('mse', 'Mean Squared Error'), ('mape', 'Mean Absolute Percentage Error'), ('smape', 'Symmetric Mean Absolute Percentage Error')):
     plot_grouped_bar_chart(
-        error, description, error.upper(), f"{error}_mean", x_values, errors, label_names, y_err_key=f"{error}_std")
+        f"{system_name}_{error}", f"{system_name.replace('_', ' ')} - {description}", error.upper(), f"{error}_mean", x_values, errors, label_names, y_err_key=f"{error}_std")
 
-plot_grouped_bar_chart('time', 'Time Taken', 'Time per iteration (s)',
+plot_grouped_bar_chart(f"{system_name}_time", f"{system_name.replace('_', ' ')} - {Time Taken}", 'Time per iteration (s)',
                        'time', x_values, measurement_results, label_names)
 
 if not no_monitoring:
-    plot_grouped_bar_chart('cpu', 'CPU Usage', 'CPU (%)', 'cpu',
+    plot_grouped_bar_chart(f"{system_name}_cpu", f"{system_name.replace('_', ' ')} - {CPU Usage}", 'CPU (%)', 'cpu',
                            x_values, measurement_results, label_names)
-    plot_grouped_bar_chart('memory', 'Memory Usage', 'Memory (%)',
+    plot_grouped_bar_chart(f"{system_name}_memory", f"{system_name.replace('_', ' ')} - {Memory Usage}", 'Memory (%)',
                            'memory', x_values, measurement_results, label_names)
 
 print(f"Graphs generated and saved to {results_directory}.")
