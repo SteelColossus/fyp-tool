@@ -57,15 +57,7 @@ def monitor_resources():
 def get_system_filename(system_name):
     system_filename = None
 
-    if system_name == 'Apache':
-        system_filename = 'Apache_AllMeasurements'
-    elif system_name == 'BDBC':
-        system_filename = 'BDBC_AllMeasurements'
-    elif system_name == 'SQL':
-        system_filename = 'SQL_AllMeasurements'
-    elif system_name == 'X264':
-        system_filename = 'X264_AllMeasurements'
-    elif system_name == 'FPGA_sort':
+    if system_name == 'FPGA_sort':
         system_filename = 'SS-B2'
     elif system_name == 'Apache_Storm':
         system_filename = 'SS-K1'
@@ -414,13 +406,13 @@ for error, description in (('mae', 'Mean Absolute Error'), ('mse', 'Mean Squared
     plot_grouped_bar_chart(
         f"{system_name}_{error}", f"{system_name.replace('_', ' ')} - {description}", error.upper(), f"{error}_mean", x_values, errors, label_names, y_err_key=f"{error}_std")
 
-plot_grouped_bar_chart(f"{system_name}_time", f"{system_name.replace('_', ' ')} - {Time Taken}", 'Time per iteration (s)',
+plot_grouped_bar_chart(f"{system_name}_time", f"{system_name.replace('_', ' ')} - Time Taken", 'Time per iteration (s)',
                        'time', x_values, measurement_results, label_names)
 
 if not no_monitoring:
-    plot_grouped_bar_chart(f"{system_name}_cpu", f"{system_name.replace('_', ' ')} - {CPU Usage}", 'CPU (%)', 'cpu',
+    plot_grouped_bar_chart(f"{system_name}_cpu", f"{system_name.replace('_', ' ')} - CPU Usage", 'CPU (%)', 'cpu',
                            x_values, measurement_results, label_names)
-    plot_grouped_bar_chart(f"{system_name}_memory", f"{system_name.replace('_', ' ')} - {Memory Usage}", 'Memory (%)',
+    plot_grouped_bar_chart(f"{system_name}_memory", f"{system_name.replace('_', ' ')} - Memory Usage", 'Memory (%)',
                            'memory', x_values, measurement_results, label_names)
 
 print(f"Graphs generated and saved to {results_directory}.")

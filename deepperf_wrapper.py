@@ -1,3 +1,6 @@
+# This file is meant to act as a wrapper around the DeepPerf code. (https://github.com/DeepPerf/DeepPerf)
+# Unfortunately, due to the way the script is set up, this cannot be achieved without copying the code used within that script.
+
 import sys
 from os import path
 # In order to properly import DeepPerf, due to it not using relative paths, we have to add the directory to sys.path so it can find the imports
@@ -16,7 +19,7 @@ def fit_deep_model(x_train, y_train, skip_training=False):
     lr_opt = 0.001
 
     if not skip_training:
-    ### THE FOLLOWING CODE IS TAKEN FROM THE DEEPPERF TOOL ###
+    ### The following code is copied from the DeepPerf tool (https://github.com/DeepPerf/DeepPerf) ###
         # Split train data into 2 parts (67-33)
         N_cross = int(np.ceil(N_train*2/3))
         X_train1 = x_train[0:N_cross, :]
