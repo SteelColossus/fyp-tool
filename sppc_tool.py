@@ -138,20 +138,29 @@ def plot_grouped_bar_chart(filename, title, y_label, y_key, x_values, y_results,
     plt.close()
 
 
+error_types = {'mae': 'Mean Absolute Error', 'mse': 'Mean Squared Error',
+               'mape': 'Mean Absolute Percentage Error', 'smape': 'Symmetric Mean Absolute Percentage Error'}
+
 parser = argparse.ArgumentParser(
     description='Evaluate the prediction error for a machine learning model type and a software system.')
 parser.add_argument('system', help='the software system to evaluate')
 parser.add_argument(
     '-n', help='the number of runs to repeat', type=int, default=30)
-parser.add_argument('--samples', help='the set of sample sizes to run for (in multiples of n)',
-                    type=int, nargs='+', choices=[1, 2, 3, 4, 5], default=[1, 2, 3, 4, 5])
+parser.add_argument('-s', '--samples', help='the set of sample sizes to run for (in multiples of n)',
+                    type=int, nargs='+', default=[1, 2, 3, 4, 5])
+parser.add_argument('-e', '--errors', help='the set of errors to calculate',
+                    type=str, nargs='+', choices=list(error_types.keys()), default=list(error_types.keys()))
 parser.add_argument(
     '--skip-training', help='whether to skip training the machine learning models', action='store_true')
 parser.add_argument(
     '--no-monitoring', help='whether to not monitor the CPU and memory usage', action='store_true')
 args = parser.parse_args()
 
-system_name, max_n, samples, skip_training, no_monitoring = args.system, args.n, args.samples, args.skip_training, args.no_monitoring
+system_name, max_n, samples, error_types_to_calculate, skip_training, no_monitoring = \
+    args.system, args.n, args.samples, args.errors, args.skip_training, args.no_monitoring
+
+calculate_mae, calculate_mse, calculate_mape, calculate_smape = \
+    'mae' in error_types_to_calculate, 'mse' in error_types_to_calculate, 'mape' in error_types_to_calculate, 'smape' in error_types_to_calculate
 
 system_filename = get_system_filename(system_name)
 file_path_to_open = f"data/{system_filename}.csv"
@@ -277,35 +286,47 @@ for regression_name in errors:
             actuals = run_results['actuals']
             predictions = run_results['predictions']
 
-            run_results['mae'] = mean_absolute_error(predictions, actuals)
-            run_results['mse'] = mean_squared_error(predictions, actuals)
-            run_results['mape'] = mean_absolute_percentage_error(
-                predictions, actuals)
-            run_results['smape'] = symmetric_mean_absolute_percentage_error(
-                predictions, actuals)
+            if calculate_mae:
+                run_results['mae'] = mean_absolute_error(predictions, actuals)
+            if calculate_mse:
+                run_results['mse'] = mean_squared_error(predictions, actuals)
+            if calculate_mape:
+                run_results['mape'] = mean_absolute_percentage_error(
+                    predictions, actuals)
+            if calculate_smape:
+                run_results['smape'] = symmetric_mean_absolute_percentage_error(
+                    predictions, actuals)
 
         def mean(errors): return four_sf_round(np.mean(errors))
         def std(errors): return four_sf_round(np.std(errors))
 
         error_set = {}
 
-        error_set['mae_mean'] = mean([result['mae']
-                                      for result in sample_results])
-        error_set['mse_mean'] = mean([result['mse']
-                                      for result in sample_results])
-        error_set['mape_mean'] = mean(
-            [result['mape'] for result in sample_results])
-        error_set['smape_mean'] = mean(
-            [result['smape'] for result in sample_results])
+        if calculate_mae:
+            error_set['mae_mean'] = mean([result['mae']
+                                          for result in sample_results])
+        if calculate_mse:
+            error_set['mse_mean'] = mean([result['mse']
+                                          for result in sample_results])
+        if calculate_mape:
+            error_set['mape_mean'] = mean(
+                [result['mape'] for result in sample_results])
+        if calculate_smape:
+            error_set['smape_mean'] = mean(
+                [result['smape'] for result in sample_results])
 
-        error_set['mae_std'] = std([result['mae']
-                                    for result in sample_results])
-        error_set['mse_std'] = std([result['mse']
-                                    for result in sample_results])
-        error_set['mape_std'] = std([result['mape']
-                                     for result in sample_results])
-        error_set['smape_std'] = std([result['smape']
-                                      for result in sample_results])
+        if calculate_mae:
+            error_set['mae_std'] = std([result['mae']
+                                        for result in sample_results])
+        if calculate_mse:
+            error_set['mse_std'] = std([result['mse']
+                                        for result in sample_results])
+        if calculate_mape:
+            error_set['mape_std'] = std([result['mape']
+                                         for result in sample_results])
+        if calculate_smape:
+            error_set['smape_std'] = std([result['smape']
+                                          for result in sample_results])
 
         errors[regression_name].append(error_set)
 
@@ -335,10 +356,15 @@ for sample_i, num_samples in enumerate(samples):
         memory_text = '-'
 
         if error_set is not None:
-            mae_text = f"{error_set['mae_mean']} +/- {error_set['mae_std']}"
-            mse_text = f"{error_set['mse_mean']} +/- {error_set['mse_std']}"
-            mape_text = f"{error_set['mape_mean']}% +/- {error_set['mape_std']}%"
-            smape_text = f"{error_set['smape_mean']}% +/- {error_set['smape_std']}%"
+            if calculate_mae:
+                mae_text = f"{error_set['mae_mean']} +/- {error_set['mae_std']}"
+            if calculate_mse:
+                mse_text = f"{error_set['mse_mean']} +/- {error_set['mse_std']}"
+            if calculate_mape:
+                mape_text = f"{error_set['mape_mean']}% +/- {error_set['mape_std']}%"
+            if calculate_smape:
+                smape_text = f"{error_set['smape_mean']}% +/- {error_set['smape_std']}%"
+
             time_text = f"{measurement_set['time']}s"
 
             if not no_monitoring:
@@ -355,14 +381,20 @@ for sample_i, num_samples in enumerate(samples):
 
 print('-' * 40)
 print('Results:')
-print('MAE:')
-print(tabulate(tables['mae'], headers='firstrow', tablefmt='grid'))
-print('MSE:')
-print(tabulate(tables['mse'], headers='firstrow', tablefmt='grid'))
-print('MAPE:')
-print(tabulate(tables['mape'], headers='firstrow', tablefmt='grid'))
-print('SMAPE:')
-print(tabulate(tables['smape'], headers='firstrow', tablefmt='grid'))
+
+if calculate_mae:
+    print('MAE:')
+    print(tabulate(tables['mae'], headers='firstrow', tablefmt='grid'))
+if calculate_mse:
+    print('MSE:')
+    print(tabulate(tables['mse'], headers='firstrow', tablefmt='grid'))
+if calculate_mape:
+    print('MAPE:')
+    print(tabulate(tables['mape'], headers='firstrow', tablefmt='grid'))
+if calculate_smape:
+    print('SMAPE:')
+    print(tabulate(tables['smape'], headers='firstrow', tablefmt='grid'))
+
 print('Time elapsed:')
 print(tabulate(tables['time'], headers='firstrow', tablefmt='grid'))
 
@@ -389,7 +421,7 @@ with open(f"{results_directory}/{system_name}_measurement_results.pickle", 'wb')
     pickle.dump(measurement_results, measurement_results_file)
 
 for name, table in tables.items():
-    if (name == 'cpu' or name == 'memory') and no_monitoring:
+    if (name in error_types.keys() and name not in error_types_to_calculate) or ((name == 'cpu' or name == 'memory') and no_monitoring):
         continue
 
     np.savetxt(f"{results_directory}/{system_name}_{name}_results.csv",
@@ -402,7 +434,8 @@ label_names = [f"{sample}N" for sample in samples]
 
 print("Generating graphs...")
 
-for error, description in (('mae', 'Mean Absolute Error'), ('mse', 'Mean Squared Error'), ('mape', 'Mean Absolute Percentage Error'), ('smape', 'Symmetric Mean Absolute Percentage Error')):
+for error in error_types_to_calculate:
+    description = error_types[error]
     plot_grouped_bar_chart(
         f"{system_name}_{error}", f"{system_name.replace('_', ' ')} - {description}", error.upper(), f"{error}_mean", x_values, errors, label_names, y_err_key=f"{error}_std")
 
