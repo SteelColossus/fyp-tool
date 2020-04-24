@@ -141,6 +141,11 @@ def plot_grouped_bar_chart(filename, title, y_label, y_key, x_values, y_results,
 error_types = {'mae': 'Mean Absolute Error', 'mse': 'Mean Squared Error',
                'mape': 'Mean Absolute Percentage Error', 'smape': 'Symmetric Mean Absolute Percentage Error'}
 
+regression_types = [RegressionType.LINEAR, RegressionType.LINEAR_BAGGING, RegressionType.SVM,
+                    RegressionType.SVM_BAGGING, RegressionType.TREES, RegressionType.TREES_BAGGING, RegressionType.DEEP]
+
+regression_names = [rt.name.lower() for rt in regression_types]
+
 parser = argparse.ArgumentParser(
     description='Evaluate the prediction error for a machine learning model type and a software system.')
 parser.add_argument('system', help='the software system to evaluate')
@@ -150,17 +155,21 @@ parser.add_argument('-s', '--samples', help='the set of sample sizes to run for 
                     type=int, nargs='+', default=[1, 2, 3, 4, 5])
 parser.add_argument('-e', '--errors', help='the set of errors to calculate',
                     type=str, nargs='+', choices=list(error_types.keys()), default=list(error_types.keys()))
+parser.add_argument('-m', '--models', help='the set of models to train',
+                    type=str, nargs='+', choices=regression_names, default=regression_names)
 parser.add_argument(
     '--skip-training', help='whether to skip training the machine learning models', action='store_true')
 parser.add_argument(
     '--no-monitoring', help='whether to not monitor the CPU and memory usage', action='store_true')
 args = parser.parse_args()
 
-system_name, max_n, samples, error_types_to_calculate, skip_training, no_monitoring = \
-    args.system, args.n, args.samples, args.errors, args.skip_training, args.no_monitoring
+system_name, max_n, samples, error_types_to_calculate, models_to_train, skip_training, no_monitoring = \
+    args.system, args.n, args.samples, args.errors, args.models, args.skip_training, args.no_monitoring
 
 calculate_mae, calculate_mse, calculate_mape, calculate_smape = \
     'mae' in error_types_to_calculate, 'mse' in error_types_to_calculate, 'mape' in error_types_to_calculate, 'smape' in error_types_to_calculate
+
+regression_types_to_train = [rt for rt in regression_types if rt.name.lower() in models_to_train]
 
 system_filename = get_system_filename(system_name)
 file_path_to_open = f"data/{system_filename}.csv"
@@ -175,15 +184,12 @@ print('-' * 40)
 (x, y) = read_csv_file(file_path_to_open)
 num_features = x.shape[1]
 
-regression_types = [RegressionType.LINEAR, RegressionType.LINEAR_BAGGING, RegressionType.SVM,
-                    RegressionType.SVM_BAGGING, RegressionType.TREES, RegressionType.TREES_BAGGING, RegressionType.DEEP]
-
 total_start_time = time.perf_counter()
 
-model_results = {rt.name: [] for rt in regression_types}
-measurement_results = {rt.name: [] for rt in regression_types}
+model_results = {rt.name: [] for rt in regression_types_to_train}
+measurement_results = {rt.name: [] for rt in regression_types_to_train}
 
-for regression_type in regression_types:
+for regression_type in regression_types_to_train:
     for sample_i, num_samples in enumerate(samples):
         model_results[regression_type.name].append([])
         measurement_results[regression_type.name].append({})
@@ -330,7 +336,7 @@ for regression_name in errors:
 
         errors[regression_name].append(error_set)
 
-table_headings = [''] + [rt.value for rt in regression_types]
+table_headings = [''] + [rt.value for rt in regression_types_to_train]
 
 tables = {'mae': [], 'mse': [], 'mape': [],
           'smape': [], 'time': [], 'cpu': [], 'memory': []}
@@ -343,7 +349,7 @@ for table in tables.values():
         table.append([sample_text])
 
 for sample_i, num_samples in enumerate(samples):
-    for regression_type in regression_types:
+    for regression_type in regression_types_to_train:
         error_set = errors[regression_type.name][sample_i]
         measurement_set = measurement_results[regression_type.name][sample_i]
 
@@ -429,7 +435,7 @@ for name, table in tables.items():
 
 print(f"Results written to {results_directory}.")
 
-x_values = [rt.value for rt in regression_types]
+x_values = [rt.value for rt in regression_types_to_train]
 label_names = [f"{sample}N" for sample in samples]
 
 print("Generating graphs...")
