@@ -3,11 +3,16 @@
 
 import sys
 from os import path
-# In order to properly import DeepPerf, due to it not using relative paths, we have to add the directory to sys.path so it can find the imports
-sys.path.append(path.join(path.dirname(path.abspath(__file__)), 'extensions', 'DeepPerf'))
-from extensions.DeepPerf.AutoDeepPerf import nn_l1_val, MLPPlainModel, MLPSparseModel
 
 import numpy as np
+
+# In order to properly import DeepPerf, due to it not using relative paths, we have to add the directory to sys.path so it can find the imports
+sys.path.append(path.join(path.dirname(path.abspath(__file__)), 'extensions', 'DeepPerf'))
+
+try:
+    from extensions.DeepPerf.AutoDeepPerf import nn_l1_val, MLPPlainModel, MLPSparseModel
+except ImportError as e:
+    raise e
 
 def fit_deep_model(x_train, y_train, skip_training=False):
     y_train = y_train[:, np.newaxis]

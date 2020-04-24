@@ -1,6 +1,13 @@
-from ml_models import fit_ml_model, RegressionType
-from deepperf_wrapper import fit_deep_model
 from error_calculations import mean_absolute_error, mean_squared_error, mean_absolute_percentage_error, symmetric_mean_absolute_percentage_error
+from ml_models import fit_ml_model, RegressionType
+
+deepperf_imported = False
+
+try:
+    from deepperf_wrapper import fit_deep_model
+    deepperf_imported = True
+except ImportError:
+    deepperf_imported = False
 
 import time
 import argparse
@@ -142,7 +149,13 @@ error_types = {'mae': 'Mean Absolute Error', 'mse': 'Mean Squared Error',
                'mape': 'Mean Absolute Percentage Error', 'smape': 'Symmetric Mean Absolute Percentage Error'}
 
 regression_types = [RegressionType.LINEAR, RegressionType.LINEAR_BAGGING, RegressionType.SVM,
-                    RegressionType.SVM_BAGGING, RegressionType.TREES, RegressionType.TREES_BAGGING, RegressionType.DEEP]
+                    RegressionType.SVM_BAGGING, RegressionType.TREES, RegressionType.TREES_BAGGING]
+
+if deepperf_imported:
+    regression_types.append(RegressionType.DEEP)
+    print('DeepPerf extension imported.')
+else:
+    print('DeepPerf extension is missing and will not be imported.')
 
 regression_names = [rt.name.lower() for rt in regression_types]
 

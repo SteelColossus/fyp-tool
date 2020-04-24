@@ -7,6 +7,7 @@ This tool was developed for my Final Year Project. It allows for comparison of d
 3. Install [Tensorflow 1.10](https://www.tensorflow.org/install/pip). (You can optionally set up a virtual environment for this.)
 4. Install [scikit-learn](https://scikit-learn.org/stable/install.html).
 5. Install the other required libraries, [matplotlib](https://matplotlib.org/users/installing.html#installing-an-official-release), [tabulate](https://pypi.org/project/tabulate/) and [psutil](https://pypi.org/project/psutil/).
+6. Optionally, clone the [DeepPerf](https://github.com/DeepPerf/DeepPerf) repository, create a `/extensions` folder in the tool's directory and copy the DeepPerf repository into it. This will allow using the DeepPerf tool as a model to train with.
 
 ## How to run
 This tool is run via Python at the command line, e.g.
