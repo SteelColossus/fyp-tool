@@ -192,6 +192,8 @@ file_path_to_open = f"data/{system_filename}.csv"
 start_date = datetime.now().replace(microsecond=0)
 print(f"Started at {start_date.isoformat()}.")
 
+x, y = None, None
+
 try:
     (x, y) = read_csv_file(file_path_to_open)
 except OSError:
