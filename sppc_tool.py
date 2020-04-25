@@ -63,18 +63,19 @@ def monitor_resources():
 
 def get_system_filename(system_name):
     system_filename = None
+    system_name_lower = system_name.lower()
 
-    if system_name == 'FPGA_sort':
+    if system_name_lower == 'fpga_sort':
         system_filename = 'SS-B2'
-    elif system_name == 'Apache_Storm':
+    elif system_name_lower == 'apache_storm':
         system_filename = 'SS-K1'
-    elif system_name == 'LLVM':
+    elif system_name_lower == 'llvm':
         system_filename = 'SS-L1'
-    elif system_name == 'Trimesh':
+    elif system_name_lower == 'trimesh':
         system_filename = 'SS-M2'
-    elif system_name == 'X264-DB':
+    elif system_name_lower == 'x264-db':
         system_filename = 'SS-N1'
-    elif system_name == 'SaC':
+    elif system_name_lower == 'sac':
         system_filename = 'SS-O2'
     else:
         system_filename = system_name
@@ -182,7 +183,8 @@ system_name, max_n, samples, error_types_to_calculate, models_to_train, skip_tra
 calculate_mae, calculate_mse, calculate_mape, calculate_smape = \
     'mae' in error_types_to_calculate, 'mse' in error_types_to_calculate, 'mape' in error_types_to_calculate, 'smape' in error_types_to_calculate
 
-regression_types_to_train = [rt for rt in regression_types if rt.name.lower() in models_to_train]
+regression_types_to_train = [
+    rt for rt in regression_types if rt.name.lower() in models_to_train]
 
 system_filename = get_system_filename(system_name)
 file_path_to_open = f"data/{system_filename}.csv"
@@ -190,17 +192,23 @@ file_path_to_open = f"data/{system_filename}.csv"
 start_date = datetime.now().replace(microsecond=0)
 print(f"Started at {start_date.isoformat()}.")
 
+try:
+    (x, y) = read_csv_file(file_path_to_open)
+except OSError:
+    print(
+        f"File {system_filename}.csv could not be found in the data directory. Exiting...")
+    exit()
+
+num_features = x.shape[1]
+
 print('-' * 40)
 print(system_name + ':')
 print('-' * 40)
 
-(x, y) = read_csv_file(file_path_to_open)
-num_features = x.shape[1]
-
-total_start_time = time.perf_counter()
-
 model_results = {rt.name: [] for rt in regression_types_to_train}
 measurement_results = {rt.name: [] for rt in regression_types_to_train}
+
+total_start_time = time.perf_counter()
 
 for regression_type in regression_types_to_train:
     for sample_i, num_samples in enumerate(samples):
