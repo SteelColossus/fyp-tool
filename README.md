@@ -18,6 +18,14 @@ python sppc_tool.py LLVM
 
 Replace `LLVM` with whatever software system you want to get predictions for. (The program looks in the `/data` folder)
 
+For convenience, several aliases are provided for the existing files in this folder (these are case insensitive):
+- `Apache_Storm`: the Apache Storm Word Count dataset (`SS-K1.csv`)
+- `FPGA_Sort`: the FPGA Sort dataset (`SS-B2.csv`)
+- `LLVM`: the LLVM dataset (`SS-L1.csv`)
+- `SaC`: the Seismic Analysis Code dataset (`SS-O2.csv`)
+- `Trimesh`: the Trimesh dataset (`SS-M2.csv`)
+- `X264-DB`: the X264 dataset (`SS-N1.csv`)
+
 To get help with the command or to see optional command line arguments, run:
 
 ```
