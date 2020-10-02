@@ -4,13 +4,16 @@
 import sys
 from os import path
 
-import numpy as np
-
 # In order to properly import DeepPerf, due to it not using relative paths, we have to add the directory to sys.path so it can find the imports
 sys.path.append(path.join(path.dirname(path.abspath(__file__)), 'extensions', 'DeepPerf'))
 
 try:
     from extensions.DeepPerf.AutoDeepPerf import nn_l1_val, MLPPlainModel, MLPSparseModel
+    
+    import tensorflow as tf
+    import numpy as np
+
+    tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 except ImportError as e:
     raise e
 
